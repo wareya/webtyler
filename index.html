@@ -303,7 +303,11 @@ window.onload = () =>
             rpgmakercanvas.height = 3*tileHeight;
             ctx = rpgmakercanvas.getContext("2d");
             ctx.clearRect(0, 0, rpgmakercanvas.width, rpgmakercanvas.height);
-            copyTile(output, ctx, [0, 0], [0, 3]);
+            copyTileQuadRaw(output, ctx, [0, 0], [0, 0], [1, 0])
+            copyTileQuadRaw(output, ctx, [0, 0], [1, 0], [3, 0])
+            copyTileQuadRaw(output, ctx, [0, 0], [0, 1], [1, 2])
+            copyTileQuadRaw(output, ctx, [0, 0], [1, 1], [3, 2])
+            
             copyTile(output, ctx, [1, 0], [2, 1]);
             copyTile(output, ctx, [0, 1], [8, 0]);
             copyTile(output, ctx, [1, 1], [11, 0]);
