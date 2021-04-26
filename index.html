@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta charset="utf-8">
-    <title>Autotyler HTML5</title>
+    <title>Autotyler JS</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <link rel="preconnect" href="https://fonts.gstatic.com/">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100&display=swap" rel="stylesheet"> 
@@ -633,12 +633,13 @@ window.onload = () =>
             <!-- <div id="option_godot" class="option affect"><span class="godot">Godot</span></div> -->
         </div>
         <div style="margin: 5px;">
+            <p>Autotyler</p>
             <div id="dropzoneWrapper">
                 <div id="dropzone" class="noselect affect" style="opacity: 1; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAAAQCAYAAACBSfjBAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAALrSURBVFhH7ZbPS1VBFMfHu2hlLwl18UqEZxYS/VCjH+4tolUm0aLsH8jAVT/+gKSVUEFt04gWYSuJkLYvoiwKI8hnIIGRBZaLkja3+z3eM5w3zL1z351HJvQBOWfOzJlz5szznmkYHbmmQOvI93D6wze1b2pHA/SlsSaS0sb6mxOVEJIcI/q6j4SxWsXNe7diTanhsxdIll8/U5PTk6QP9A/ovbLGlOvuPvyojn/q0esOP92jurv2097AFh/cLk6oxbcr5JuUO0jyl1ABOYH+nc0KEiBAcW+BJDg/WNJzWHfj+nN1ZtMxKuLQuaGwMjtHxTGZeTdDweUcbAuLC1RAjg1cMTlHFA7roAPY3z+aVwe/dKpSW4lsjC3+47ZX6sf8V9V1sgOXE1vt2PwlAR8ACbBEYgjAB4IOMOZ1Wzpa1IPfT/TtJQUAaXO1xIQOyetwiWy3FY+xxcd6+GUhLf9AJgAgYUOBKNHLFbLDtqvcRHas5wPWAzPm5jsB2WFT95eqYqKYGCOXi5cO6bVJxbMBX6yvxxkCJDbceJo2RHIANgRhcECeI6JDrU59jgd+ZI2JOb5kLkD0LSQp/bLAxeb9fAjoQ3qgjwbYUN4Mxq1bW8hmzhUaC/ob6IMtJsYcE/F5TuYhMcdZ
                                                                   nWfv9x/CGnOTyyjKNgZz7tfqTdBf4AEvJoIEwvG90GaTzGHD8zrlmbZfzLpLiZyWLP3VhtHLZsl1wAdBFIX38o+QSnxEbAV3AeOx8+5SjjiTfcZBpbykT0599s7y50lgvfyqg+Y7DTzbt7YN5fsdhnPYOtGH46+K74rpYD3/9DTSdak0ib9Imvvv8bf+qJvKf2vlnCoh/n40IFXBbz3Z0QzK4DoJ5fL9ezL70fgMyvCf+8hYyr58v1ESujF2lweDRUyEO4YKLB1+AJjI+MU66Cy4WQBOJOrL3M6a92B5ra/Tu7o01O0YOJOUFuPwlVMA6ENbyC5AFJMWf3PEjP48LVOoPgCVePDNNPdgAAAAASUVORK5CYII=&quot;); image-rendering: crisp-edges;"><span>Drop Image File Here<br>(Or Paste Image)</span></div>
             </div>
-            <div>
-                <div class="affect">
+            <div id="actualoptions">
+                <div class="affect actualoptionsjustoptions">
                     <p>Options</p>
                     <div class="inputfuckery">
                         <div class="dummy"></div>
@@ -671,11 +672,11 @@ window.onload = () =>
                         <input id="input_bottom_offset" type="number" value="0" step="1">
                     </div>
                 </div>
-                <p class="smol">Q: <i>Help! I pasted an image from an image editor, but<br>transparency isn't working, or all the pixels are shifted!</i></p>
+                <p class="smol nobottom">Q: <i>Help! I pasted an image from an image editor, but<br>transparency isn't working, or all the pixels are shifted!</i></p>
                 <p class="smol">A: Try a different image editor or a different browser<br>(some combinations are broken), or drop a file instead.</p>
-                <p class="smol">Q: <i>What are these margin offset things?</i></p>
+                <p class="smol nobottom">Q: <i>What are these margin offset things?</i></p>
                 <p class="smol">A: They control from where tiles are sliced during<br>reassembly, relative to the center.</p>
-                <p class="smol">Q: <i>Do you have any examples?</i></p>
+                <p class="smol nobottom">Q: <i>Do you have any examples?</i></p>
                 <p class="smol">A: Yes, save as files then drag back to this page:<br><img src="etc/mini.png"><br>(platforms)<br><img src="etc/minitiles-grass.png"><br>(terrain)<br><img src="etc/minitiles-32.png"><br>(32x32)</p>
             </div>
         </div>
@@ -699,11 +700,22 @@ window.onload = () =>
     margin: 10px auto;
     text-align: center;
 }
+p.nobottom {
+    margin-bottom: -3px;
+}
 p {
     text-align: center;
     font-size: 20px;
     line-height: 1;
     margin: 10px 0;
+}
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Roboto', sans;
+    font-weight: 100;
+    text-align: center;
+    margin: 0.5em 0;
+    padding-bottom: 0;
+    line-height: 1;
 }
 body {
     font-weight: 100;
@@ -736,8 +748,18 @@ input {
     text-align: right;
     width: 90px;
 }
-#options {
+#actualoptions {
+    font-size: 14px;
+}
+.actualoptionsjustoptions p {
+    display: inline-block;
+    float: left;
+    margin-left: 15px;
+}
+p {
     font-weight: 300;
+}
+#options {
 }
 #output {
     object-fit: contain;
