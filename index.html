@@ -257,7 +257,11 @@ window.onload = () =>
             temp_canvas.width = tileWidth*5;
             temp_canvas.height = tileHeight;
             let ctx2 = temp_canvas.getContext("2d");
-            copyTile(img, ctx2, [0, 0], [0, 0])
+            // rpgmaker mv ignores the top left tile when actually tiling; it is essentailly a thumbnail
+            copyTileQuadRaw(img, ctx2, [0, 0], [0, 0], [0, 1])
+            copyTileQuadRaw(img, ctx2, [0, 0], [1, 0], [1, 1])
+            copyTileQuadRaw(img, ctx2, [0, 0], [0, 1], [0, 2])
+            copyTileQuadRaw(img, ctx2, [0, 0], [1, 1], [1, 2])
             
             copyTileQuadRaw(img, ctx2, [1, 0], [0, 1], [0, 1])
             copyTileQuadRaw(img, ctx2, [1, 0], [1, 1], [1, 1])
@@ -537,23 +541,38 @@ window.onload = () =>
     // https://stackoverflow.com/questions/6333814/how-does-the-paste-image-from-clipboard-functionality-work-in-gmail-and-google-c
     document.onpaste = (e) =>
     {
-        let items = (e.clipboardData || e.originalEvent.clipboardData).items;
-        for (let item of items)
+        let clip = (e.clipboardData || e.originalEvent.clipboardData);
+        let items = clip.items;
+        let files = clip.files;
+        let types = clip.types;
+        console.log(clip);
+        console.log("items ----");
+        for(let item of items)
         {
             console.log(item);
-            if (item.kind === 'file')
-            {
-                let file = item.getAsFile();
-                if (!file.type.startsWith('image/')){ continue; }
+        }
+        console.log("files ----");
+        for(let item of files)
+        {
+            console.log(item);
+        }
+        console.log("typse ----");
+        for(let item of types)
+        {
+            console.log(item);
+            console.log(clip.getData(item));
+        }
+        for (let file of files)
+        {
+            if (!file.type.startsWith('image/')){ continue; }
 
-                img = new Image();
-                const reader = new FileReader();
-                reader.onload = (e) =>
-                {
-                    load_image(img, e.target.result, file.type);
-                };
-                reader.readAsDataURL(file);
-            }
+            img = new Image();
+            const reader = new FileReader();
+            reader.onload = (e) =>
+            {
+                load_image(img, e.target.result, file.type);
+            };
+            reader.readAsDataURL(file);
         }
     };
     
@@ -728,14 +747,14 @@ window.onload = () =>
                         <input id="input_bottom_offset" type="number" value="0" step="1">
                     </div>
                 </div>
-                <p class="smol nobottom">Q: <i>Help! I pasted an image from an image editor, but<br>transparency isn't working, or all the pixels are shifted!</i></p>
-                <p class="smol">A: Try a different image editor or a different browser<br>(some combinations are broken), or drop a file instead.</p>
-                <p class="smol nobottom">Q: <i>Help! My colors are all messed up!</i></p>
-                <p class="smol">A: Color profile data is stripped from PNGs for<br>compatibility reasons. Save your PNGs as sRGB.</p>
-                <p class="smol nobottom">Q: <i>What are these margin offset things?</i></p>
-                <p class="smol">A: They control where tile corners/edges are sliced.</p>
-                <p class="smol nobottom">Q: <i>Do you have any examples inputs?</i></p>
-                <p class="smol">A: Yes.<br style="margin-bottom: 2px;"><img src="etc/mini.png"><br><img src="etc/minitiles-grass.png"><br><img src="etc/minitiles-32.png"></p>
+                <p class="smol">Q: <i>Help! I pasted an image from an image editor, but<br>transparency isn't working, or all the pixels are shifted!</i></p>
+                <p class="smol notop">A: Try a different image editor or a different browser<br>(some combinations are broken), or drop a file instead.</p>
+                <p class="smol">Q: <i>Help! My colors are all messed up!</i></p>
+                <p class="smol notop">A: Color profile data is stripped from PNGs for<br>compatibility reasons. Save your PNGs as sRGB.</p>
+                <p class="smol">Q: <i>What are these margin offset things?</i></p>
+                <p class="smol notop">A: They control where tile corners/edges are sliced.</p>
+                <p class="smol">Q: <i>Do you have any example inputs?</i></p>
+                <p class="smol notop">A: <a href="examples.html" target=_blank>Yes (this is a link).</a></p>
             </div>
         </div>
         <div id="previews" class="affect" style="flex-grow: 1;">
@@ -750,6 +769,11 @@ window.onload = () =>
             <img id="preview" src="data:image/png;base64,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" class="pixelated_image">
         </div>
         <style type="text/css" scoped="">
+a {
+    text-decoration: none;
+    color: rgba(64,64,255,1);
+    text-shadow: 0px 0px 1px rgba(64,64,255,1);
+}
 .smol {
     font-size: 12px;
     font-weight: 300;
@@ -758,8 +782,8 @@ window.onload = () =>
     margin: 10px auto;
     text-align: center;
 }
-p.nobottom {
-    margin-bottom: -3px;
+p.notop {
+    margin-top: -5px;
 }
 p {
     text-align: center;
