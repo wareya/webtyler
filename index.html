@@ -107,10 +107,10 @@ window.onload = () =>
     {
         let x = target[0];
         let y = target[1];
-        let offset_x = [0, tileWidth/2][section[0]];
-        let offset_y = [0, tileHeight/2][section[1]];
-        let size_x = [tileWidth/2, tileWidth - tileWidth/2][section[0]];
-        let size_y = [tileHeight/2, tileHeight - tileHeight/2][section[1]];
+        let offset_x = [0, Math.floor(tileWidth/2)][section[0]];
+        let offset_y = [0, Math.floor(tileHeight/2)][section[1]];
+        let size_x = [Math.floor(tileWidth/2), tileWidth - Math.floor(tileWidth/2)][section[0]];
+        let size_y = [Math.floor(tileHeight/2), tileHeight - Math.floor(tileHeight/2)][section[1]];
         //console.log(data);
         ctx.clearRect(
             x*tileWidth+offset_x, y*tileHeight+offset_y,
@@ -281,7 +281,7 @@ window.onload = () =>
         output.onload = () => {
             // simple enough we can do it inline
             rpgmakercanvas.width = 2*tileWidth;
-            rpgmakercanvas.height = 3*tileWidth;
+            rpgmakercanvas.height = 3*tileHeight;
             ctx = rpgmakercanvas.getContext("2d");
             ctx.clearRect(0, 0, rpgmakercanvas.width, rpgmakercanvas.height);
             copyTile(output, ctx, [0, 0], [0, 3]);
@@ -514,21 +514,67 @@ window.onload = () =>
     input_right_offset.value = 0;
     input_top_offset.value = 0;
     input_bottom_offset.value = 0;
+
+    function checkInputs()
+    {
+        if(leftOffset < -Math.floor(tileWidth/2))
+        {
+            leftOffset = -Math.floor(tileWidth/2);
+            input_left_offset.value = leftOffset;
+        }
+        if(leftOffset > tileWidth - Math.floor(tileWidth/2))
+        {
+            leftOffset = tileWidth - Math.floor(tileWidth/2);
+            input_left_offset.value = leftOffset;
+        }
+        if(rightOffset < -Math.floor(tileWidth/2))
+        {
+            rightOffset = -Math.floor(tileWidth/2);
+            input_right_offset.value = rightOffset;
+        }
+        if(rightOffset > tileWidth - Math.floor(tileWidth/2))
+        {
+            rightOffset = tileWidth - Math.floor(tileWidth/2);
+            input_right_offset.value = rightOffset;
+        }
+        if(topOffset < -Math.floor(tileHeight/2))
+        {
+            topOffset = -Math.floor(tileHeight/2);
+            input_top_offset.value = topOffset;
+        }
+        if(topOffset > tileHeight - Math.floor(tileHeight/2))
+        {
+            topOffset = tileHeight - Math.floor(tileHeight/2);
+            input_top_offset.value = topOffset;
+        }
+        if(bottomOffset < -Math.floor(tileHeight/2))
+        {
+            bottomOffset = -Math.floor(tileHeight/2);
+            input_bottom_offset.value = bottomOffset;
+        }
+        if(bottomOffset > tileHeight - Math.floor(tileHeight/2))
+        {
+            bottomOffset = tileHeight - Math.floor(tileHeight/2);
+            input_bottom_offset.value = bottomOffset;
+        }
+    }
     
     input_width.oninput = (e) =>
     {
         tileWidth = parseInt(e.target.value);
+        checkInputs();
         updatePreviews(img);
     };
     input_height.oninput = (e) =>
     {
         tileHeight = parseInt(e.target.value);
-        console.log([tileHeight]);
+        checkInputs();
         updatePreviews(img);
     };
     input_left_offset.oninput = (e) =>
     {
         leftOffset = parseInt(e.target.value);
+        checkInputs();
         if(leftOffset > rightOffset)
         {
             rightOffset = leftOffset;
@@ -539,6 +585,7 @@ window.onload = () =>
     input_right_offset.oninput = (e) =>
     {
         rightOffset = parseInt(e.target.value);
+        checkInputs();
         if(leftOffset > rightOffset)
         {
             leftOffset = rightOffset;
@@ -549,6 +596,7 @@ window.onload = () =>
     input_top_offset.oninput = (e) =>
     {
         topOffset = parseInt(e.target.value);
+        checkInputs();
         if(topOffset > bottomOffset)
         {
             bottomOffset = topOffset;
@@ -559,6 +607,7 @@ window.onload = () =>
     input_bottom_offset.oninput = (e) =>
     {
         bottomOffset = parseInt(e.target.value);
+        checkInputs();
         if(topOffset > bottomOffset)
         {
             topOffset = bottomOffset;
@@ -594,12 +643,12 @@ window.onload = () =>
                     <div class="inputfuckery">
                         <div class="dummy"></div>
                         <label>Width</label>
-                        <input id="input_width" type="number" value="16" step="1">
+                        <input id="input_width" type="number" value="16" step="1" min="2">
                     </div>
                     <div class="inputfuckery">
                         <div class="dummy"></div>
                         <label>Height</label>
-                        <input id="input_height" type="number" value="16" step="1">
+                        <input id="input_height" type="number" value="16" step="1" min="2">
                     </div>
                     <div class="inputfuckery">
                         <div class="dummy"></div>
@@ -638,7 +687,7 @@ window.onload = () =>
             <p>RPG Maker</p>
             <img id="rpgmaker" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAwCAYAAABwrHhvAAACOklEQVRYhe2YMW6DQBBF5yapksYSDS5BVLlAjHwBXFFR+gKmI6kjVymTKyBFuUAOYSX32BTOXw3DwuyCpTiWkUaLd3dmHrDDfkP0e+wPW7NuC4NzVx/O0Urfp+2j+Xh5t7a6f7DG+9dtYZImN70AaDEBbdLknbH9YWuiMuuARWVmNqvC1NWuY0jO+5ImN1GZHS+IB0CLBIBAH3eU567kAJB9mJ80uSEeYN0WtkWCNE5tIjhhDFedNLkz+RAAYKMyM5Q0uXl7frUdCLhZFRYA5xhL49Tc3dyaqMw6AX0BOAgREX1/fvXINqvjFSMAH0vj1CwXsSEiGgruA1BXuy6AvEVYwXJsuYi9AHgVjALIktGMA4T4ucwCaLULq6tdB8DXb8jsI+C16qpdeWtdj0Dz814D2sIZAwhJfgWwAFjNQ6U3lJwDaH4qACCwwseM+ywXca+0tKSylGcf/A6EvkfsoekB1xh2yyEfXz0xqge4BkCLsf1hq2oITU+oekDu+5jD+8c0hKYnvPSA1ACYjwTSB9v3ui1UPeGlB/Cb6wKsaJcPn6vpCSLS9QBPKsWHy4ePaXqiAyCDhtT2UL1reoKIwvXAXHMCzDVfPVBXuz6A1ANTzVcPyP2ktwbmAPjOuwJcHoDvO8NZhjLA2bwHpmr9Mf+6CnwPTNH6mn/QGpi6D4z5XwH+D8Cp9ID0P289MLX2T6oHptb+yfTAnGfuO+/yAEKqpQdA5P99YCwg/qoHJ+cQPt8H5poz+V8dP3HKlNFMitgZAAAAAElFTkSuQmCC" class="pixelated_image">
             
-            <p style="margin-top: -5px;">Preview</p>
+            <p>Preview</p>
             <img id="preview" src="data:image/png;base64,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" class="pixelated_image">
         </div>
         <style type="text/css" scoped="">
@@ -691,18 +740,25 @@ input {
     font-weight: 300;
 }
 #output {
+    object-fit: contain;
     width: 100%;
-    height: unset;
+    max-width: 384px;
+    height: 128px;
 }
 #preview {
+    object-fit: contain;
     width: 100%;
-    height: unset;
+    max-width: 384px;
+    height: 288px;
 }
 #rpgmaker {
     display: block;
     margin: auto;
-    margin-bottom: 15px;
-    width: 64px;
+
+    object-fit: contain;
+    min-width: 64px;
+    max-width: 384px;
+    height: 96px;
 }
 div.affect {
     background-color: white;
