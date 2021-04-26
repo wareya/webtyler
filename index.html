@@ -8,10 +8,29 @@
     <link rel="preconnect" href="https://fonts.gstatic.com/">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100&display=swap" rel="stylesheet"> 
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap" rel="stylesheet"> 
+    <script src="KaitaiStream.js"></script>
+    <script src="Png.js"></script>
 <script>
 'use strict';
 window.onload = () =>
 {
+    // https://stackoverflow.com/questions/9267899/arraybuffer-to-base64-encoded-string
+    function _arrayToBase64(buffer) {
+        let binary = '';
+        let bytes = new Uint8Array(buffer);
+        for (let i = 0; i < bytes.length; i++)
+            binary += String.fromCharCode(bytes[i]);
+        return window.btoa(binary);
+    }
+    // https://stackoverflow.com/questions/21797299/convert-base64-string-to-arraybuffer
+    function _base64ToArray(base64)
+    {
+        let binary_string = window.atob(base64);
+        let bytes = new Array(binary_string.length);
+        for (let i = 0; i < binary_string.length; i++)
+            bytes[i] = binary_string.charCodeAt(i);
+        return bytes;
+    }
     function enter(e)
     {
         e.stopPropagation();
@@ -89,7 +108,6 @@ window.onload = () =>
         let offset_y = [0, offy1, offy2][section[1]];
         let size_x = [offx1, midwx, endwx][section[0]];
         let size_y = [offy1, midwy, endwy][section[1]];
-        //console.log(data);
         ctx.clearRect(
             x*tileWidth+offset_x, y*tileHeight+offset_y,
             size_x, size_y
@@ -111,7 +129,6 @@ window.onload = () =>
         let offset_y = [0, Math.floor(tileHeight/2)][section[1]];
         let size_x = [Math.floor(tileWidth/2), tileWidth - Math.floor(tileWidth/2)][section[0]];
         let size_y = [Math.floor(tileHeight/2), tileHeight - Math.floor(tileHeight/2)][section[1]];
-        //console.log(data);
         ctx.clearRect(
             x*tileWidth+offset_x, y*tileHeight+offset_y,
             size_x, size_y
@@ -338,10 +355,44 @@ window.onload = () =>
             }
         };
     }
+
+    function delete_color_correction_metadata(data)
+    {
+        let gamma_chunk = [0x00, 0x00, 0x00, 0x04, 0x67, 0x41, 0x4D, 0x41];
+        let srgb_chunk = [0x00, 0x00, 0x00, 0x01, 0x73, 0x52, 0x47, 0x42];
+        //let srgb_chunk  = new Array([0x00, 0x00, 0x00, 0x04, 0x67, 0x41, 0x4D, 0x41]);
+        function find(array)
+        {
+            return data.findIndex((_, i, data) =>
+            {
+                function equal(buf1, buf2)
+                {
+                    if (buf1.length != buf2.length)
+                        return false;
+                    for (let i = 0 ; i != buf1.length ; i++)
+                    {
+                        if (buf1[i] != buf2[i])
+                            return false;
+                    }
+                    return true;
+                }
+                let asdf = equal(data.slice(i, i+8), array); // gAMA chunk
+                return asdf;
+            });
+        };
+        let index = find(gamma_chunk);
+        if(index >= 0)
+            data.splice(index, 16);
+        index = find(srgb_chunk);
+        if(index >= 0)
+            data.splice(index, 13);
+        return data;
+    }
     
-    function load_image(img, src)
+    function load_image(img, src, mime)
     {
         let dropzone = document.getElementById("dropzone");
+
         img.onload = (e) =>
         {
             dropzone.style.backgroundImage = "url('"+img.src + "')";
@@ -351,6 +402,13 @@ window.onload = () =>
                 dropzone.style.imageRendering = "crisp-edges";
             updatePreviews(img);
         };
+        if(mime.includes("png") && src.includes("base64,"))
+        {
+            let data = _base64ToArray(src.split("base64,")[1]);
+            data = delete_color_correction_metadata(data);
+            data = _arrayToBase64(data);
+            src = "data:image/png;base64," + data;
+        }
         img.src = src;
     }
     
@@ -375,7 +433,7 @@ window.onload = () =>
             const reader = new FileReader();
             reader.onload = (e) =>
             {
-                load_image(img, e.target.result);
+                load_image(img, e.target.result, file.type);
             };
             reader.readAsDataURL(file);
         }
@@ -403,7 +461,7 @@ window.onload = () =>
                 const reader = new FileReader();
                 reader.onload = (e) =>
                 {
-                    load_image(img, e.target.result);
+                    load_image(img, e.target.result, file.type);
                 };
                 reader.readAsDataURL(file);
                 break;
@@ -490,11 +548,12 @@ window.onload = () =>
             {
                 let file = item.getAsFile();
                 if (!file.type.startsWith('image/')){ continue; }
+
                 img = new Image();
                 const reader = new FileReader();
                 reader.onload = (e) =>
                 {
-                    load_image(img, e.target.result);
+                    load_image(img, e.target.result, file.type);
                 };
                 reader.readAsDataURL(file);
             }
