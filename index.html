@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <title>Autotyler HTML5</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="preconnect" href="https://fonts.gstatic.com/">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100&display=swap" rel="stylesheet"> 
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap" rel="stylesheet"> 
+<script>
+'use strict';
+window.onload = () =>
+{
+    function enter(e)
+    {
+        e.stopPropagation();
+        e.preventDefault();
+        
+        let dropzone = document.getElementById("dropzone");
+        dropzone.style.opacity = 0.5;
+    }
+    function over(e)
+    {
+        e.stopPropagation();
+        e.preventDefault();
+        
+        let dropzone = document.getElementById("dropzone");
+        dropzone.style.opacity = 0.5;
+    }
+    function leave(e)
+    {
+        e.stopPropagation();
+        e.preventDefault();
+        
+        let dropzone = document.getElementById("dropzone");
+        dropzone.style.opacity = 1.0;
+    }
+    let img = undefined;
+    
+    let mode = "minitiles";
+    
+    let tileWidth = 16;
+    let tileHeight = 16;
+    let leftOffset = 0;
+    let rightOffset = 0;
+    let bottomOffset = 0;
+    let topOffset = 0;
+    
+    let canvas = document.createElement('canvas');
+    canvas.width = 192;
+    canvas.height = 64;
+    let previewcanvas = document.createElement('canvas');
+    previewcanvas.width = 12*tileWidth;
+    previewcanvas.height = 9*tileHeight;
+    let rpgmakercanvas = document.createElement('canvas');
+    rpgmakercanvas.width = 2*tileWidth;
+    rpgmakercanvas.height = 3*tileHeight;
+
+    function copyTile(img, ctx, to, from)
+    {
+        ctx.clearRect(
+            to[0]*tileWidth, to[1]*tileHeight,
+            tileWidth, tileHeight
+        );
+        ctx.drawImage(
+            img,
+            from[0]*tileWidth, from[1]*tileHeight,
+            tileWidth, tileHeight,
+            to[0]*tileWidth, to[1]*tileHeight,
+            tileWidth, tileHeight
+        );
+    }
+
+    function copyTileSectionRaw(img, ctx, target, section, data)
+    {
+        let x = target[0];
+        let y = target[1];
+        let offx1 = Math.floor(tileWidth/2) + leftOffset;
+        let offx2 = offx1 - leftOffset + rightOffset;
+        let offy1 = Math.floor(tileHeight/2) + topOffset;
+        let offy2 = offy1 - topOffset + bottomOffset;
+        let midwx = rightOffset - leftOffset;
+        let midwy = bottomOffset - topOffset;
+        let endwx = tileWidth - offx2;
+        let endwy = tileHeight - offy2;
+        
+        let offset_x = [0, offx1, offx2][section[0]];
+        let offset_y = [0, offy1, offy2][section[1]];
+        let size_x = [offx1, midwx, endwx][section[0]];
+        let size_y = [offy1, midwy, endwy][section[1]];
+        //console.log(data);
+        ctx.clearRect(
+            x*tileWidth+offset_x, y*tileHeight+offset_y,
+            size_x, size_y
+        );
+        ctx.drawImage(
+            img,
+            data[0]*tileWidth+offset_x, data[1]*tileHeight+offset_y,
+            size_x, size_y,
+            x*tileWidth+offset_x, y*tileHeight+offset_y,
+            size_x, size_y
+        );
+    }
+
+    function copyTileQuadRaw(img, ctx, target, section, data)
+    {
+        let x = target[0];
+        let y = target[1];
+        let offset_x = [0, tileWidth/2][section[0]];
+        let offset_y = [0, tileHeight/2][section[1]];
+        let size_x = [tileWidth/2, tileWidth - tileWidth/2][section[0]];
+        let size_y = [tileHeight/2, tileHeight - tileHeight/2][section[1]];
+        //console.log(data);
+        ctx.clearRect(
+            x*tileWidth+offset_x, y*tileHeight+offset_y,
+            size_x, size_y
+        );
+        ctx.drawImage(
+            img,
+            data[0]*tileWidth+offset_x, data[1]*tileHeight+offset_y,
+            size_x, size_y,
+            x*tileWidth+offset_x, y*tileHeight+offset_y,
+            size_x, size_y
+        );
+    }
+    
+    function copyTileSection(img, ctx, target, section, _data)
+    {
+        let data = _data[section[1]*3+section[0]];
+        if(data[0] < 0 || data[1] < 0)
+            return;
+        copyTileSectionRaw(img, ctx, target, section, data);
+    }
+    
+    function apply_subtile_data(img, ctx, data_array)
+    {
+        for(let i = 0; i < data_array.length; i++)
+        {
+            let target_tile = data_array[i][0];
+            let data = data_array[i][1];
+            for(let y = 0; y < 3; y++)
+            {
+                for(let x = 0; x < 3; x++)
+                {
+                    let section = [x, y];
+                    copyTileSection(img, ctx, target_tile, section, data);
+                }
+            }
+        }
+    }
+    function apply_tile_data(img, ctx, data_array)
+    {
+        for(let i = 0; i < data_array.length; i++)
+        {
+            let target_tile = data_array[i][0];
+            let data = data_array[i][1];
+            copyTile(img, ctx, target_tile, data);
+        }
+    }
+
+    function updateMinitiles(img, ctx)
+    {
+        apply_subtile_data(img, ctx, minitiles_data);
+    }
+
+    function update4x4(img, ctx)
+    {
+        apply_tile_data(img, ctx, fourxfour_data);
+    }
+
+    function update3x3(img, ctx)
+    {
+        // convert 3x3 to 4x4
+        let temp_canvas = document.createElement('canvas');
+        temp_canvas.width = tileWidth*4;
+        temp_canvas.height = tileHeight*4;
+        let ctx2 = temp_canvas.getContext("2d");
+        apply_subtile_data(img, ctx2, threexthree_data);
+        // convert 4x4 to godot
+        apply_tile_data(temp_canvas, ctx, fourxfour_data);
+    }
+    
+    function fix_inner_corners(img, ctx, source_tile)
+    {
+        let data_array = inner_corners_data;
+        for(let i = 0; i < data_array.length; i++)
+        {
+            let target_tile = data_array[i][0];
+            let source_sections = data_array[i][1];
+            for(let section of source_sections)
+            {
+                section = [section[0]*2, section[1]*2];
+                copyTileSectionRaw(img, ctx, target_tile, section, source_tile);
+            }
+        }
+    }
+
+    function updatePreviews(img)
+    {
+        if(!img)
+            return;
+        canvas.width = 12*tileWidth;
+        canvas.height = 4*tileHeight;
+        let ctx = canvas.getContext("2d");
+        if(mode == "minitiles")
+            updateMinitiles(img, ctx);
+        if(mode == "basic")
+        {
+            // convert basic to minitiles
+            let temp_canvas = document.createElement('canvas');
+            temp_canvas.width = tileWidth*5;
+            temp_canvas.height = tileHeight;
+            let ctx2 = temp_canvas.getContext("2d");
+            copyTile(img, ctx2, [0, 0], [0, 0])
+            copyTile(img, ctx2, [1, 0], [1, 0])
+            copyTile(img, ctx2, [2, 0], [1, 0])
+            copyTile(img, ctx2, [3, 0], [1, 0])
+            copyTile(img, ctx2, [4, 0], [1, 0])
+            // convert minitiles to godot
+            updateMinitiles(temp_canvas, ctx);
+        }
+        if(mode == "4x4")
+            update4x4(img, ctx);
+        if(mode == "3x3")
+            update3x3(img, ctx);
+        if(mode == "4x4plus")
+        {
+            update4x4(img, ctx);
+            fix_inner_corners(img, ctx, [4, 0]);
+        }
+        if(mode == "3x3plus")
+        {
+            update3x3(img, ctx);
+            fix_inner_corners(img, ctx, [3, 0]);
+        }
+        if(mode == "rpgmaker")
+        {
+            // convert rpgmaker to minitiles
+            let temp_canvas = document.createElement('canvas');
+            temp_canvas.width = tileWidth*5;
+            temp_canvas.height = tileHeight;
+            let ctx2 = temp_canvas.getContext("2d");
+            copyTile(img, ctx2, [0, 0], [0, 0])
+            
+            copyTileQuadRaw(img, ctx2, [1, 0], [0, 1], [0, 1])
+            copyTileQuadRaw(img, ctx2, [1, 0], [1, 1], [1, 1])
+            copyTileQuadRaw(img, ctx2, [1, 0], [0, 0], [0, 2])
+            copyTileQuadRaw(img, ctx2, [1, 0], [1, 0], [1, 2])
+            
+            copyTileQuadRaw(img, ctx2, [2, 0], [1, 0], [0, 1])
+            copyTileQuadRaw(img, ctx2, [2, 0], [0, 0], [1, 1])
+            copyTileQuadRaw(img, ctx2, [2, 0], [1, 1], [0, 2])
+            copyTileQuadRaw(img, ctx2, [2, 0], [0, 1], [1, 2])
+            
+            copyTile(img, ctx2, [3, 0], [1, 0])
+            
+            copyTileQuadRaw(img, ctx2, [4, 0], [1, 1], [0, 1])
+            copyTileQuadRaw(img, ctx2, [4, 0], [0, 1], [1, 1])
+            copyTileQuadRaw(img, ctx2, [4, 0], [1, 0], [0, 2])
+            copyTileQuadRaw(img, ctx2, [4, 0], [0, 0], [1, 2])
+            // convert minitiles to godot
+            updateMinitiles(temp_canvas, ctx);
+            
+        }
+        let output = document.getElementById("output");
+        output.src = canvas.toDataURL();
+
+        if(canvas.width > 384)
+        {
+            output.classList.remove("pixelated_image");
+            output.classList.add("smooth_image");
+        }
+        else
+        {
+            output.classList.remove("smooth_image");
+            output.classList.add("pixelated_image");
+        }
+        
+        output.onload = () => {
+            // simple enough we can do it inline
+            rpgmakercanvas.width = 2*tileWidth;
+            rpgmakercanvas.height = 3*tileWidth;
+            ctx = rpgmakercanvas.getContext("2d");
+            copyTile(output, ctx, [0, 0], [0, 3]);
+            copyTile(output, ctx, [1, 0], [2, 1]);
+            copyTile(output, ctx, [0, 1], [8, 0]);
+            copyTile(output, ctx, [1, 1], [11, 0]);
+            copyTile(output, ctx, [0, 2], [8, 3]);
+            copyTile(output, ctx, [1, 2], [11, 3]);
+            
+            let rpgmakeroutput = document.getElementById("rpgmaker");
+            rpgmakeroutput.src = rpgmakercanvas.toDataURL();
+            
+            if(rpgmakercanvas.height > 128)
+            {
+                rpgmakeroutput.classList.remove("pixelated_image");
+                rpgmakeroutput.classList.add("smooth_image");
+            }
+            else
+            {
+                rpgmakeroutput.classList.remove("smooth_image");
+                rpgmakeroutput.classList.add("pixelated_image");
+            }
+            
+            previewcanvas.width = 12*tileWidth;
+            previewcanvas.height = 9*tileHeight;
+            ctx = previewcanvas.getContext("2d");
+            for(let y = 0; y < preview_data.length; y++)
+            {
+                let scanline = preview_data[y];
+                for(let x = 0; x < scanline.length; x++)
+                {
+                    let source = scanline[x];
+                    if(source < 0)
+                        continue;
+                    if(source >= 22)
+                        source += 1;
+                    let from = [source%12, Math.floor(source/12)];
+                    copyTile(output, ctx, [x, y], from);
+                }
+            }
+            let preview = document.getElementById("preview");
+            preview.src = previewcanvas.toDataURL();
+
+            if(previewcanvas.width > 384)
+            {
+                preview.classList.remove("pixelated_image");
+                preview.classList.add("smooth_image");
+            }
+            else
+            {
+                preview.classList.remove("smooth_image");
+                preview.classList.add("pixelated_image");
+            }
+        };
+    }
+    
+    function load_image(img, src)
+    {
+        let dropzone = document.getElementById("dropzone");
+        img.onload = (e) =>
+        {
+            dropzone.style.backgroundImage = "url('"+img.src + "')";
+            if(img.width > 300 || img.height > 200)
+                dropzone.style.imageRendering = "auto";
+            else
+                dropzone.style.imageRendering = "crisp-edges";
+            updatePreviews(img);
+        };
+        img.src = src;
+    }
+    
+    function drop(e)
+    {
+        e.stopPropagation();
+        e.preventDefault();
+        
+        let dropzone = document.getElementById("dropzone");
+        dropzone.style.opacity = 1.0;
+        
+        const dt = e.dataTransfer;
+        let files = dt.files;
+        
+        for (let i = 0; i < files.length; i++)
+        {
+            const file = files[i];
+            
+            if (!file.type.startsWith('image/')){ continue; }
+            
+            img = new Image();
+            const reader = new FileReader();
+            reader.onload = (e) =>
+            {
+                load_image(img, e.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+    
+    let dropzone = document.getElementById("dropzone");
+    dropzone.ondragenter = enter;
+    dropzone.ondragleave = leave;
+    dropzone.ondragover = over;
+    dropzone.ondrop = drop;
+    
+    let option_basic = document.getElementById("option_basic");
+    let option_minitiles = document.getElementById("option_minitiles");
+    let option_4x4 = document.getElementById("option_4x4");
+    let option_3x3 = document.getElementById("option_3x3");
+    let option_4x4plus = document.getElementById("option_4x4plus");
+    let option_3x3plus = document.getElementById("option_3x3plus");
+    let option_rpgmaker = document.getElementById("option_rpgmaker");
+    function reset_selected()
+    {
+        option_basic.classList.remove("selected");
+        option_minitiles.classList.remove("selected");
+        option_4x4.classList.remove("selected");
+        option_3x3.classList.remove("selected");
+        option_4x4plus.classList.remove("selected");
+        option_3x3plus.classList.remove("selected");
+        option_rpgmaker.classList.remove("selected");
+    };
+    option_basic.onclick = () =>
+    {
+        mode = "basic";
+        reset_selected();
+        option_basic.classList.add("selected");
+    };
+    option_minitiles.onclick = () =>
+    {
+        mode = "minitiles";
+        reset_selected();
+        option_minitiles.classList.add("selected");
+    };
+    option_4x4.onclick = () =>
+    {
+        mode = "4x4";
+        reset_selected();
+        option_4x4.classList.add("selected");
+    };
+    option_3x3.onclick = () =>
+    {
+        mode = "3x3";
+        reset_selected();
+        option_3x3.classList.add("selected");
+    };
+    option_4x4plus.onclick = () =>
+    {
+        mode = "4x4plus";
+        reset_selected();
+        option_4x4plus.classList.add("selected");
+    };
+    option_3x3plus.onclick = () =>
+    {
+        mode = "3x3plus";
+        reset_selected();
+        option_3x3plus.classList.add("selected");
+    };
+    option_rpgmaker.onclick = () =>
+    {
+        mode = "rpgmaker";
+        reset_selected();
+        option_rpgmaker.classList.add("selected");
+    };
+    // https://stackoverflow.com/questions/6333814/how-does-the-paste-image-from-clipboard-functionality-work-in-gmail-and-google-c
+    document.onpaste = (e) =>
+    {
+        var items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        for (let item of items)
+        {
+            //var item = items[index];
+            if (item.kind === 'file')
+            {
+                var file = item.getAsFile();
+                if (!file.type.startsWith('image/')){ continue; }
+                img = new Image();
+                const reader = new FileReader();
+                reader.onload = (e) =>
+                {
+                    load_image(img, e.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    };
+    
+    let input_width = document.getElementById("input_width");
+    let input_height = document.getElementById("input_height");
+    let input_left_offset = document.getElementById("input_left_offset");
+    let input_right_offset = document.getElementById("input_right_offset");
+    let input_top_offset = document.getElementById("input_top_offset");
+    let input_bottom_offset = document.getElementById("input_bottom_offset");
+    
+    input_width.value = 16;
+    input_height.value = 16;
+    input_left_offset.value = 0;
+    input_right_offset.value = 0;
+    input_top_offset.value = 0;
+    input_bottom_offset.value = 0;
+    
+    input_width.oninput = (e) =>
+    {
+        tileWidth = parseInt(e.target.value);
+        updatePreviews(img);
+    };
+    input_height.oninput = (e) =>
+    {
+        tileHeight = parseInt(e.target.value);
+        console.log([tileHeight]);
+        updatePreviews(img);
+    };
+    input_left_offset.oninput = (e) =>
+    {
+        leftOffset = parseInt(e.target.value);
+        if(leftOffset > rightOffset)
+        {
+            rightOffset = leftOffset;
+            input_right_offset.value = e.target.value;
+        }
+        updatePreviews(img);
+    };
+    input_right_offset.oninput = (e) =>
+    {
+        rightOffset = parseInt(e.target.value);
+        if(leftOffset > rightOffset)
+        {
+            leftOffset = rightOffset;
+            input_left_offset.value = e.target.value;
+        }
+        updatePreviews(img);
+    };
+    input_top_offset.oninput = (e) =>
+    {
+        topOffset = parseInt(e.target.value);
+        if(topOffset > bottomOffset)
+        {
+            bottomOffset = topOffset;
+            input_bottom_offset.value = e.target.value;
+        }
+        updatePreviews(img);
+    };
+    input_bottom_offset.oninput = (e) =>
+    {
+        bottomOffset = parseInt(e.target.value);
+        if(topOffset > bottomOffset)
+        {
+            topOffset = bottomOffset;
+            input_top_offset.value = e.target.value;
+        }
+        updatePreviews(img);
+    };
+}
+</script>
+</head>
+
+<body>
+    <div id="app" class="affect">
+        <div id="options" style="width: 200px; min-height: 10px;" class="affect">
+            <p>Modes</p>
+            <div id="option_basic" class="option affect"><span class="basicbg">Basic</span></div>
+            <div id="option_minitiles" class="option affect selected"><span class="minitilesbg">Minitiles</span></div>
+            <div id="option_4x4" class="option affect"><span class="fourxfourbg">4x4</span></div>
+            <div id="option_3x3" class="option affect"><span class="threexthreebg">3x3</span></div>
+            <div id="option_4x4plus" class="option affect"><span class="fourxfourplusbg">4x4plus</span></div>
+            <div id="option_3x3plus" class="option affect"><span class="threexthreeplusbg">3x3plus</span></div>
+            <div id="option_rpgmaker" class="option affect"><span class="rpgmakerbg">RPG Maker</span></div>
+            <!-- <div id="option_godot" class="option affect"><span class="godot">Godot</span></div> -->
+        </div>
+        <div style="margin: 5px;">
+            <div id="dropzoneWrapper">
+                <div id="dropzone" class="noselect affect" style="opacity: 1; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAAAQCAYAAACBSfjBAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAALrSURBVFhH7ZbPS1VBFMfHu2hlLwl18UqEZxYS/VCjH+4tolUm0aLsH8jAVT/+gKSVUEFt04gWYSuJkLYvoiwKI8hnIIGRBZaLkja3+z3eM5w3zL1z351HJvQBOWfOzJlz5szznmkYHbmmQOvI93D6wze1b2pHA/SlsSaS0sb6mxOVEJIcI/q6j4SxWsXNe7diTanhsxdIll8/U5PTk6QP9A/ovbLGlOvuPvyojn/q0esOP92jurv2097AFh/cLk6oxbcr5JuUO0jyl1ABOYH+nc0KEiBAcW+BJDg/WNJzWHfj+nN1ZtMxKuLQuaGwMjtHxTGZeTdDweUcbAuLC1RAjg1cMTlHFA7roAPY3z+aVwe/dKpSW4lsjC3+47ZX6sf8V9V1sgOXE1vt2PwlAR8ACbBEYgjAB4IOMOZ1Wzpa1IPfT/TtJQUAaXO1xIQOyetwiWy3FY+xxcd6+GUhLf9AJgAgYUOBKNHLFbLDtqvcRHas5wPWAzPm5jsB2WFT95eqYqKYGCOXi5cO6bVJxbMBX6yvxxkCJDbceJo2RHIANgRhcECeI6JDrU59jgd+ZI2JOb5kLkD0LSQp/bLAxeb9fAjoQ3qgjwbYUN4Mxq1bW8hmzhUaC/ob6IMtJsYcE/F5TuYhMcdZyesnWfv9x/CGnOTyyjKNgZz7tfqTdBf4AEvJoIEwvG90GaTzGHD8zrlmbZfzLpLiZyWLP3VhtHLZsl1wAdBFIX38o+QSnxEbAV3AeOx8+5SjjiTfcZBpbykT0599s7y50lgvfyqg+Y7DTzbt7YN5fsdhnPYOtGH46+K74rpYD3/9DTSdak0ib9Imvvv8bf+qJvKf2vlnCoh/n40IFXBbz3Z0QzK4DoJ5fL9ezL70fgMyvCf+8hYyr58v1ESujF2lweDRUyEO4YKLB1+AJjI+MU66Cy4WQBOJOrL3M6a92B5ra/Tu7o01O0YOJOUFuPwlVMA6ENbyC5AFJMWf3PEjP48LVOoPgCVePDNNPdgAAAAASUVORK5CYII=&quot;); image-rendering: crisp-edges;"><span>Drop Image File Here<br>(Or Paste Image)</span></div>
+            </div>
+            <div>
+                <div class="affect">
+                    <p>Options</p>
+                    <div class="inputfuckery">
+                        <div class="dummy"></div>
+                        <label>Width</label>
+                        <input id="input_width" type="number" value="16" step="1">
+                    </div>
+                    <div class="inputfuckery">
+                        <div class="dummy"></div>
+                        <label>Height</label>
+                        <input id="input_height" type="number" value="16" step="1">
+                    </div>
+                    <div class="inputfuckery">
+                        <div class="dummy"></div>
+                        <label>Left Margin Offset</label>
+                        <input id="input_left_offset" type="number" value="0" step="1">
+                    </div>
+                    <div class="inputfuckery">
+                        <div class="dummy"></div>
+                        <label>Right Margin Offset</label>
+                        <input id="input_right_offset" type="number" value="0" step="1">
+                    </div>
+                    <div class="inputfuckery">
+                        <div class="dummy"></div>
+                        <label>Top Margin Offset</label>
+                        <input id="input_top_offset" type="number" value="0" step="1">
+                    </div>
+                    <div class="inputfuckery">
+                        <div class="dummy"></div>
+                        <label>Bottom Margin Offset</label>
+                        <input id="input_bottom_offset" type="number" value="0" step="1">
+                    </div>
+                </div>
+                <p class="smol">Q: <i>Help! I pasted an image from an image editor, but<br>transparency isn't working, or all the pixels are shifted!</i></p>
+                <p class="smol">A: Try a different image editor or a different browser<br>(some combinations are broken), or drop a file instead.</p>
+                <p class="smol">Q: <i>What are these margin offset things?</i></p>
+                <p class="smol">A: They control from where tiles are sliced during<br>reassembly, relative to the center.</p>
+            </div>
+        </div>
+        <div id="previews" class="affect" style="flex-grow: 1;">
+            <p>Godot</p>
+            <img id="output" src="data:image/png;base64,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" class="pixelated_image">
+            <p class="smol"><i>Tip: Right Click -&gt; Save Image As...</i></p>
+            
+            <p>RPG Maker</p>
+            <img id="rpgmaker" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAwCAYAAABwrHhvAAACOklEQVRYhe2YMW6DQBBF5yapksYSDS5BVLlAjHwBXFFR+gKmI6kjVymTKyBFuUAOYSX32BTOXw3DwuyCpTiWkUaLd3dmHrDDfkP0e+wPW7NuC4NzVx/O0Urfp+2j+Xh5t7a6f7DG+9dtYZImN70AaDEBbdLknbH9YWuiMuuARWVmNqvC1NWuY0jO+5ImN1GZHS+IB0CLBIBAH3eU567kAJB9mJ80uSEeYN0WtkWCNE5tIjhhDFedNLkz+RAAYKMyM5Q0uXl7frUdCLhZFRYA5xhL49Tc3dyaqMw6AX0BOAgREX1/fvXINqvjFSMAH0vj1CwXsSEiGgruA1BXuy6AvEVYwXJsuYi9AHgVjALIktGMA4T4ucwCaLULq6tdB8DXb8jsI+C16qpdeWtdj0Dz814D2sIZAwhJfgWwAFjNQ6U3lJwDaH4qACCwwseM+ywXca+0tKSylGcf/A6EvkfsoekB1xh2yyEfXz0xqge4BkCLsf1hq2oITU+oekDu+5jD+8c0hKYnvPSA1ACYjwTSB9v3ui1UPeGlB/Cb6wKsaJcPn6vpCSLS9QBPKsWHy4ePaXqiAyCDhtT2UL1reoKIwvXAXHMCzDVfPVBXuz6A1ANTzVcPyP2ktwbmAPjOuwJcHoDvO8NZhjLA2bwHpmr9Mf+6CnwPTNH6mn/QGpi6D4z5XwH+D8Cp9ID0P289MLX2T6oHptb+yfTAnGfuO+/yAEKqpQdA5P99YCwg/qoHJ+cQPt8H5poz+V8dP3HKlNFMitgZAAAAAElFTkSuQmCC" class="pixelated_image">
+            
+            <p style="margin-top: -5px;">Preview</p>
+            <img id="preview" src="data:image/png;base64,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" class="pixelated_image">
+        </div>
+        <style type="text/css" scoped="">
+.smol {
+    font-size: 12px;
+    font-weight: 300;
+    width: 100%;
+    max-width: 350px;
+    margin: 10px auto;
+    text-align: center;
+}
+p {
+    text-align: center;
+    font-size: 20px;
+    line-height: 1;
+    margin: 10px 0;
+}
+body {
+    font-weight: 100;
+    background-color: rgb(0, 0, 0, 0.1);
+}
+img {
+    min-width: 5px;
+    min-height: 5px;
+    
+    box-shadow: 0 0 5px rgba(0,0,0,0.25);
+}
+label {
+    font-weight: 300;
+}
+.inputfuckery {
+    display: flex;
+    flex-direction: row;
+    box-sizing: padding-box;
+}
+.inputfuckery * {
+    margin: 2px 5px;
+}
+.dummy {
+    display: inline-block;
+    flex-grow: 1;
+}
+input {
+    border: 1px solid rgba(0,0,0,0.25);
+    border-radius: 4px;
+    text-align: right;
+    width: 90px;
+}
+#options {
+    font-weight: 300;
+}
+#output {
+    width: 100%;
+    height: unset;
+}
+#preview {
+    width: 100%;
+    height: unset;
+}
+#rpgmaker {
+    display: block;
+    margin: auto;
+    margin-bottom: 15px;
+    width: 64px;
+}
+div.affect {
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.25) inset;
+    border-radius: 8px;
+    margin: 5px;
+    padding: 5px;
+}
+div.option {
+    box-shadow: 0 0 10px rgba(0,0,0,0.25);
+}
+#app {
+    font-family: 'Roboto', sans;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    width: 938px;
+    height: 700px;
+    margin: auto;
+    border: 1px solid rgba(0,0,0,0.);
+    border-radius: 6px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    padding: 5px;
+    margin-top: 15px;
+    z-index: -3;
+}
+#dropzoneWrapper {
+    border: 2px dashed rgba(0,128,256,1);
+    border-radius: 8px;
+}
+#dropzone {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+    
+    padding: 0;
+    position: relative;
+    width: 300px;
+    height: 200px;
+    background-color: transparent;
+    border: 1px solid white;
+    box-sizing: border-box;
+    position: relative;
+    
+    margin: 0;
+    text-align: center;
+    font-size: 30px;
+    font-weight: 0;
+    color: white;
+    text-shadow: 0px 1px rgba(0, 0, 0, 0.65), 1px 1px rgba(0, 0, 0, 0.65);
+    
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+.option {
+    user-select: none;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 16px;
+    font-weight: 0;
+    height: 74px;
+    color: white;
+    text-shadow: 0px 1px rgba(0, 0, 0, 0.65), 1px 1px rgba(0, 0, 0, 0.65);
+}
+.option:hover {
+    opacity: 0.75;
+}
+div.selected {
+    background-color: rgb(128, 192, 255, 0.25);
+}
+.noselect {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+.minitilesbg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAAAQCAYAAACBSfjBAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAALrSURBVFhH7ZbPS1VBFMfHu2hlLwl18UqEZxYS/VCjH+4tolUm0aLsH8jAVT/+gKSVUEFt04gWYSuJkLYvoiwKI8hnIIGRBZaLkja3+z3eM5w3zL1z351HJvQBOWfOzJlz5szznmkYHbmmQOvI93D6wze1b2pHA/SlsSaS0sb6mxOVEJIcI/q6j4SxWsXNe7diTanhsxdIll8/U5PTk6QP9A/ovbLGlOvuPvyojn/q0esOP92jurv2097AFh/cLk6oxbcr5JuUO0jyl1ABOYH+nc0KEiBAcW+BJDg/WNJzWHfj+nN1ZtMxKuLQuaGwMjtHxTGZeTdDweUcbAuLC1RAjg1cMTlHFA7roAPY3z+aVwe/dKpSW4lsjC3+47ZX6sf8V9V1sgOXE1vt2PwlAR8ACbBEYgjAB4IOMOZ1Wzpa1IPfT/TtJQUAaXO1xIQOyetwiWy3FY+xxcd6+GUhLf9AJgAgYUOBKNHLFbLDtqvcRHas5wPWAzPm5jsB2WFT95eqYqKYGCOXi5cO6bVJxbMBX6yvxxkCJDbceJo2RHIANgRhcECeI6JDrU59jgd+ZI2JOb5kLkD0LSQp/bLAxeb9fAjoQ3qgjwbYUN4Mxq1bW8hmzhUaC/ob6IMtJsYcE/F5TuYhMcdZyesnWfv9x/CGnOTyyjKNgZz7tfqTdBf4AEvJoIEwvG90GaTzGHD8zrlmbZfzLpLiZyWLP3VhtHLZsl1wAdBFIX38o+QSnxEbAV3AeOx8+5SjjiTfcZBpbykT0599s7y50lgvfyqg+Y7DTzbt7YN5fsdhnPYOtGH46+K74rpYD3/9DTSdak0ib9Imvvv8bf+qJvKf2vlnCoh/n40IFXBbz3Z0QzK4DoJ5fL9ezL70fgMyvCf+8hYyr58v1ESujF2lweDRUyEO4YKLB1+AJjI+MU66Cy4WQBOJOrL3M6a92B5ra/Tu7o01O0YOJOUFuPwlVMA6ENbyC5AFJMWf3PEjP48LVOoPgCVePDNNPdgAAAAASUVORK5CYII=');
+}
+.basicbg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAQCAYAAAB3AH1ZAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHASURBVEhLzZS9SwJxGMd/d0OTmEQ69LLY2xAUaQS5W0SbSTSU/QM5uFV/QNEkVH9CRJNODuFuREkURlA6SGBkgeVQ0nLd9+Ge45Q7T7mhPsvz8rvf83xPn+ek/cSeAL7Eh5J9fBfTmVEJfjXpIWvMsX+7XFRgcS80M69QAROOTo41T4j4+pbmNUMCuHh4vF/AgspdXQxMucmCzahfP8NzhweXYq1nESIsBYD8fZ6a524utEwzMjd/SJeoASwafJbedBHwAWJ+rnfEK85+zts2Z6yaAxnFUHjudYwSsNyARGwXKY/cRM5DeTzPopwio1jctSr8w356O4AcmjEQxWfEaVU0Mi9a4Ax56TkghWZDFKARhPDbIfb1eSnXeuZ2uXkGHCFrlkADwM1q9RrFwHj23fgi3w4MoNGaQVuAVTKujB3lSplsJByR1OIdDaIVugAttt1dTHQqmyIfAvhuJztvBgmIbcSUYuFJXxe73cU5fgUIUENdvN09M/QZaL3UTREj3d5rGsK/4H8IGAwMYZopwdYK/v+vCteOvwGAhnAnuUtBdGFF4RVrBzfHXRUaQqPw4GRQ8+whAU5QGzv4DgjxC2e6BUnBLVfLAAAAAElFTkSuQmCC");
+}
+.fourxfourbg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAQFSURBVHhe7ZtNSFVBFMfnaZSBaRi6MF1klq1ykRSI0Mo2LQKzSAhatK0I2rgU+oAW4cJo00qIVqKLCAKhkkQ3SSBJphZYfiCakoppEi//p3sup+v9mLnX51u8+YGemTnznzl3vG/OdXhXMU8nW9OXe6+nuezXxmW2kii9n6/hUbPxnHH1sswWpPALzt6xedV4vFTBgpnhn6r8ZDFZcK252vWhX8fDQTX8pC9Sz7APtrNrgnwoA9054+jRl8tyLI4/n4Mf7ZlQy2UFZFsu1Kh3Lz6r35v5NOD0wJQ601Cp+t/MUhn94DtYXdp2r6ulLUy/MrfhahDY/J4/VIcPfUzmjKPn/kHx5+8/X9OGgWtHy9VGnVJVfSXq05E16rD8ZV5tdi6ojYoUiQ73FKiV2n8XBR/gwIL0Ba9W1b6zZa5mYXRRFR0tVScGilXT3Rr19cfaNg3q04WLNPZq+7dE+tnWsdD48xD8rcJLqqqyilYSoA0TMKfnql0fSD2fU+svZ6isoweoYxwuo/98+wHtOZPow+LP67/Tlaqvq6cKOmJgXh3Uy0pKqc3rKyosos+Qjp7rchzGT4M6990JvdRxP44/j2oO6AC489LyEtWB9P1aX6OylyD9sfFDro8tw/Ure89RWfp3Sg+43Rs/7eJvO1+nO549pgYdJmcmyb4fGYqlzzYyfvcCqEWDgQ+Dqru3m8pyAaghAXIBb1694ZT00dV746cLmBr6np74OE5OHYZGhmgVeQFM9UFgXAQfdxxdvYzf3QOSBp9Uz+x2HP9tgrmIXQDH5izGC8AbyE6DcaU1RVfvjZ928Qe376dNJpZ5FNZUn21k/KF53C+3YpfVfQ7YrdwehE78kXkcf1lvbuXbiBfAVG9CJvQyfq3nAJ3Jk+rDyKTeZgHH5ix2ARzrCzYLaRmZR8MI0uuSKb2M301jMmVEIfMorKk+28j4Q/O4H9hR7XnA1i3FeRR1ex6wRVI9s9tx2Czg2JzFLoBjteENZKfBuNKaoqv3xk+7uD0PMPh/HrusPQ9wbiNeAHsesEVSfRiZ1Nss4NicxS6AY33BZiEtI/NoGEF6XTKll/G7aUymjChkHoU11WcbGf+2PB6Ve7Gjhj0HxM3dcXWMrt4bv28exy3jzZ0S+DmPom6qDyKujtHVy/gDnwNMg0iqZ+LqGFO9zQKOzTq4LZMQV08LUHGqMsUDRA0kPz9Ok5HeDx4TP5nWc1+O370IcLGxKQ1nFPLiJbr6bBMUf27j/W69X5vf9+2ZKL2fz74vsFUGunPG0dv3Bez7AvZ9gdD47fsCVHNAB8Cd7fsCAfDDDj9Q2PMAex5gzwMS65m4OsZUb88DHJt1cFsmIa7engdQq4M9D8g5lPoL23/VdvXfJ/8AAAAASUVORK5CYII=");
+}
+.threexthreebg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAL+SURBVGhD7Zc7aFNhFMfPTQSjVGML7dA2gzEYoWCHii4Fp04OQq2CIDi4qjh2TBEFB8lQcXFqFSdpB1HEgFqUZDG0jVZjrYU+khBSC7a12Ipc/Z/khDSP9j7ysOH+IPnO/c75n/ud+zgfl4QHc/3qhcAVVez8uWK+7rt922rKqc+1ZQQK/uAMTKeo52gzYQTxyA9qPe5kG4gP49CTGfbBBvkajOBynyfrM6pHrNi5uQbvhChyf0yxy+KjozO00uLg8eJZL719+oU2f9tpNblBseAi+5A4tecPH8OHmGIaLAIxp7pd9O51wpRe4vNzIe6Qp9ln33fG60PizmgrbZwgco810efD6xyw8i1FjhdrtPd0CxeC46XoMh080kzHgk7qveml2e/rBRocxxqW+URr/nlT+kT/NG20K2y3jTpotTN9UREHbFj89Ybz5Ha5+UoAzOEEueD4ZNKTtRGf8h8oqUGs+IAZfX4u5XGSfj2Ls22ff/lpwD/g901GJml/XOHE4aUP1PaziX92m40SyhLb8EmMUEyD40ZnI/vKoe/wdGyJc8RUnh9/HlL4JV4ML6jDD4c5IZhdmE0HT4UzM0RdHV0ZSzvl0udqsbaJ6ATb76fC6QLeDL1SBx/d48ndwFx8jsctBfCMCXIvwLVLVzOWdrTqg+MhGgmMsJ0tAI/QzMev7DQDbjlObjSPVj3icBdQgC0zZ3rxgtk8evXZAnYrVgG1pmwFSM+WUS9a9fICC9yFbt+4pRo9cS3QvA9Uq7eXopgeXUrXPoA7U43eXopienmMNO8DRk8uVFJvdaFaU98FSGuVUS+V0hfsA9b3wD+qtWegI1nfA9thNo9evdVGa41VgFCqZ2tFq15eYIG7kPU9UIJK6NGlrO8BvVRSb3WhWlPfBUhrlVEvldIX7AN19T1gtHdXa89AR9pxH8AtM9K7jeoErXrE7bgPGF2EUZ2gV2+1USG/U+jFqJ4LaO9yKZLASCJ5JvGrtF5i8fzjmP+Ecz29Kpz/O7L4OoDoLyNhY4hfjpj6AAAAAElFTkSuQmCC");
+}
+.threexthreebg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+}
+.fourxfourplusbg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABACAYAAACNx/A2AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAU0SURBVHhe7ZtNaFxVFMfPJFJTiIlUkkXsLIypKS7ahaVCKXTVblyItYoFoQt3oiK4yTJiFVy0WVTcuApIV6FdiFIIqMUyXegQqAZjk1qibWKY2NK0pE1LGPM/mfO88/o+7r1nkgnM/UG4n/9zzztv+u7x4iXhq9mh6pvj71SlntQndSlN8vRJYwdPHXNe01dv1qUUZGxk6HT1x9Hvo7/XDx+N/sx+zMXa0BbEwPjVCh1+oYdQgrkrd6hvTzeX4MSxgWgM8858fpmufHkxVy/IGMrRsRkeQx3Yrumjx1ypm7bEf/F96vwM7V8YoP5iP88RypNlev/t96g0cbnWQ/RdcYKWrlVo92sD1G4aWOrt4PL4q4P00zd/0MNH7ezQzdINevlgkS79MM91zMPY0wM9wyfHjg9n6e8urEQaPFjliVVuYwxzXNb00cv8NP/F7t6pvseCB+Yr87S6ulprrTPd/Q/Pv77tDrVvf2VwWAys7CPqv7iDfn9umRdAlB+NLtLKzgIv+uz5Drq7dz0oGAOmA0n6jgv36MlDvZFmceoWdT3fQ7tL3XT0k0H689/lxzRo3+y8xbbvjfyl0s8PXc30H3MXiyu0n17kdhwEsK+3r9Zap33yPge7vPgrteHhP+h8gzvwJgH64KCAn7aMgcLZBXrw7RzXbfQAbdiROuZXRp6yXlOjz/IfdkydDdAA2G279NFY4cC+A1EHBuXtoN27o4f74mNdnV38DbHRR2/bsCMkadCWuY3QmzqZJ/6jjn4foGur1RkxJIvdXrrNbWCO3X+wzPU4afpd089EY1IK0n5r2xGum+ON0gPpz/I/DjYQs0yC3wC25jNff8EdNszOzXL5y2TZS99sTP+RonDDkygA3LKgtLadnxs/x3UzgNyhwHwBSBtcsdXH/RfffdfnANwo/12d+W26LtfJAj9pvEUJoKs+jaScywVbven/Zx9+Gr18n/Wjb6D24bV6odl+uOrrNpGAOyGASkIAa+D754NzAOUD3GjkAXwfxFYf9x87sqmxWR9zoMMf76LYiWyEgplHoXTVNxut/6aeDaTlcUm5EXYp2zxws3K7NGz918AGsvI4vJl4boQ+vAVxwFXvwkbo4/5rsMoDbZzX6rNotj6LsAsrCQFUEgKoJDOA+NiapSDbeB5pels2Sm/rvw1RGmJu+XmYeRBKV32zifuvIQoAtyzAjmabB7qwWTljkv8a2EArnwfWuryxygNt0OqFreKHLWEXVhICqCQEUIlzAOUD3Ghg1yxdsdU32n/ehVr9PFADG3A5z8MuF84D/4cNhPNAf6zyQBvntfosmq3PIuzCSkIAlYQAKskMID62ZinY5lFpels2Sm/rvw1RGmJu+XnE8yhXfbOJ+68hCgC31sjLvbCjZeWBvrmbr06w1Sf5r4ENxPM4/OTjuZMJxs08ylWfhq9OsNXH/deQmge6PoRWL/jqBK3elbALK9kyAcQ/Kw1avS8cwJ0vFQviQJ4jSd8PF30SYhN/G62XuY34/oE6I/hf/mE8j7TFbfXNplHBCzQSuTMr9aQ+qUtpkqdPGtsq94U18E8ZxnFlVe7kAlzei9+9lTHzvi3aWXpBxlBupfvC3KGgTR4etxmlxAK4lCcOyQU9tGUerpzuefdQNU9valBHKWN4iCRN2po++jz/eUBBy98XXvh59mOueNLy94W1hPvCSur+SwQLAFms1e8L28BvIJwH+hMFgFtr5J2rlSbCeaAJGwjngf6E80Al4TxQSTgPVBLOA5XUGQnngYFNhug/1UtvY7aPZ1MAAAAASUVORK5CYII=");
+    
+}
+.threexthreeplusbg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAwCAYAAAChS3wfAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAPMSURBVGhD7ZpNSFRRFMfPaJiBaRjOYnIW2ZTSIheJgQitbNMiMouCoEXbiqCNSyEKWpQLo00rIVqJLqIIhEoS3TQIlmRqhaVOMqb4gR/FMPk/vvO6juP43n1vRmXeDx7nfpz/ffeded5zeEjC09HG+KXO63FpJ44lm6t92JBS46ZebYsVZK658VH8Xesb87pQV29e6jh8cW9ofbJA51CU6o6VECyY6J+lwIkibgOZg21tG+E5tEGiBhZcawiZc7p6+EpbXavlQS/1P+nyyd4HO0aoejJEZcEy9hHCA2G6efUG9fT1GiNEr4J9NPc1ShXnQ5SrLjDnz2d75Vw5vX/xhf78zaX5yRUa7xnjOWwsuifGfczBJ5kGDwGfU7VB6n4bcaQX/8S14HcgVNIk61YOBjY8PIhEIxSLxYzeGsNFv9j/e94s5e47W94kC6xUEZV1FdPnw4t8A0Qp//UC7T3t50CgPzU4TYVHSqiip4jq75bTt9+LGzTojxdM80YXmn840kcah2il1MftQx35NF+59qPAD8B3KrhC1XSc+4kgAAF/wOitkTuwxMEKT32kHDz8rYKLPIBfAmAMG1RBH6+YtOEfbd6/qQa+Mgec6BPX8j2fpOWXE9zGOqrOCtAArJvTfafNV1NVYw5gUqKLvr+45H+0V+fER0imQV983dCrOvErLCjkMwBtjOsAXY7RZmQhudnM3Az3jw4fNOcSbyb9y3lnuK3Ou6UHMo69LS0vcnsrcACqNhkcQaSGlmePeWA3MDoxyvbDQNiHFMcdTcwAcM8BagCRduxiVd+zms7aO9u5jQDI3nXvzwEYC/+Mj3waXpcrdUiWc+1gVQ8/vAUIwP3b98wfT+f+5hng9OEFp+tkWr/uEMxGvAAYdteTKtWlwrUAyAZ0N2JVj3lJgwAZQdVYuT98oMPFWQAnqRXhTkGtA2Dt7l/Vp6wDMpXbNyOZHqe8WgdwwwFb1gGIrN3cqpIOPcakDjCGtLFUB+huXthufSq8NGjYrMULgGGTIqlFrF3SpVfrAKeYaVBNOTudxDrACWYAuOeATNUMyAgZrQPsgFc1EzUD/DJaB9jB6Tpu7cMqXhYwbNbiBcCwjtksZ1vFql4OQLfgU3S3fw9wAi/gfQ/wvgekzr+6mxe2W58KLwsYNmvxAmDYpEhqFGuXdOldrwO87wFKHaCbuzNVMyAjpL0OwCunk7t1dYJVPfzSXgfoPoSuTnCqt4uXBQzrmMST2i5O9bpwAEpPBn2yAZ2NyN8krnTrxdeNv3+wbhH8yxkW3+m49fAeRPQPi0bkQT1QNuYAAAAASUVORK5CYII=");
+}
+.rpgmakerbg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAwCAYAAABwrHhvAAACOklEQVRYhe2YMW6DQBBF5yapksYSDS5BVLlAjHwBXFFR+gKmI6kjVymTKyBFuUAOYSX32BTOXw3DwuyCpTiWkUaLd3dmHrDDfkP0e+wPW7NuC4NzVx/O0Urfp+2j+Xh5t7a6f7DG+9dtYZImN70AaDEBbdLknbH9YWuiMuuARWVmNqvC1NWuY0jO+5ImN1GZHS+IB0CLBIBAH3eU567kAJB9mJ80uSEeYN0WtkWCNE5tIjhhDFedNLkz+RAAYKMyM5Q0uXl7frUdCLhZFRYA5xhL49Tc3dyaqMw6AX0BOAgREX1/fvXINqvjFSMAH0vj1CwXsSEiGgruA1BXuy6AvEVYwXJsuYi9AHgVjALIktGMA4T4ucwCaLULq6tdB8DXb8jsI+C16qpdeWtdj0Dz814D2sIZAwhJfgWwAFjNQ6U3lJwDaH4qACCwwseM+ywXca+0tKSylGcf/A6EvkfsoekB1xh2yyEfXz0xqge4BkCLsf1hq2oITU+oekDu+5jD+8c0hKYnvPSA1ACYjwTSB9v3ui1UPeGlB/Cb6wKsaJcPn6vpCSLS9QBPKsWHy4ePaXqiAyCDhtT2UL1reoKIwvXAXHMCzDVfPVBXuz6A1ANTzVcPyP2ktwbmAPjOuwJcHoDvO8NZhjLA2bwHpmr9Mf+6CnwPTNH6mn/QGpi6D4z5XwH+D8Cp9ID0P289MLX2T6oHptb+yfTAnGfuO+/yAEKqpQdA5P99YCwg/qoHJ+cQPt8H5poz+V8dP3HKlNFMitgZAAAAAElFTkSuQmCC");
+}
+.godotbg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+}
+.smooth_image {
+    image-rendering: auto;
+}
+.pixelated_image {
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+}
+        </style>
+    </div>
+<script>
+// convert minitiles to godot
+var minitiles_data = [
+    [[0,0], [[0,0],[0,0],[0,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],]],
+    [[1,0], [[0,0],[0,0],[2,0],[0,0],[0,0],[2,0],[1,0],[1,0],[3,0],]],
+    [[2,0], [[2,0],[2,0],[2,0],[2,0],[2,0],[2,0],[3,0],[3,0],[3,0],]],
+    [[3,0], [[2,0],[0,0],[0,0],[2,0],[0,0],[0,0],[3,0],[1,0],[1,0],]],
+    [[4,0], [[4,0],[4,0],[3,0],[4,0],[4,0],[3,0],[3,0],[3,0],[3,0],]],
+    [[5,0], [[2,0],[2,0],[2,0],[2,0],[4,0],[4,0],[3,0],[4,0],[4,0],]],
+    [[6,0], [[2,0],[2,0],[2,0],[4,0],[4,0],[2,0],[4,0],[4,0],[3,0],]],
+    [[7,0], [[3,0],[4,0],[4,0],[3,0],[4,0],[4,0],[3,0],[3,0],[3,0],]],
+    [[8,0], [[0,0],[0,0],[2,0],[0,0],[4,0],[4,0],[1,0],[4,0],[4,0],]],
+    [[9,0], [[3,0],[3,0],[3,0],[4,0],[4,0],[4,0],[4,0],[4,0],[4,0],]],
+    [[10,0], [[2,0],[2,0],[2,0],[4,0],[4,0],[4,0],[4,0],[4,0],[4,0],]],
+    [[11,0], [[2,0],[0,0],[0,0],[4,0],[4,0],[0,0],[4,0],[4,0],[1,0],]],
+    
+    [[0,1], [[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],]],
+    [[1,1], [[1,0],[1,0],[3,0],[1,0],[1,0],[3,0],[1,0],[1,0],[3,0],]],
+    [[2,1], [[3,0],[3,0],[3,0],[3,0],[3,0],[3,0],[3,0],[3,0],[3,0],]],
+    [[3,1], [[3,0],[1,0],[1,0],[3,0],[1,0],[1,0],[3,0],[1,0],[1,0],]],
+    [[4,1], [[1,0],[1,0],[3,0],[1,0],[4,0],[4,0],[1,0],[4,0],[4,0],]],
+    [[5,1], [[3,0],[4,0],[4,0],[4,0],[4,0],[4,0],[4,0],[4,0],[4,0],]],
+    [[6,1], [[4,0],[4,0],[3,0],[4,0],[4,0],[4,0],[4,0],[4,0],[4,0],]],
+    [[7,1], [[3,0],[1,0],[1,0],[4,0],[4,0],[1,0],[4,0],[4,0],[1,0],]],
+    [[8,1], [[1,0],[4,0],[4,0],[1,0],[4,0],[4,0],[1,0],[4,0],[4,0],]],
+    [[9,1], [[3,0],[4,0],[4,0],[4,0],[4,0],[4,0],[4,0],[4,0],[3,0],]],
+    [[10,1], [[-1,-1],[-1,-1],[-1,-1],[-1,-1],[-1,-1],[-1,-1],[-1,-1],[-1,-1],[-1,-1],]],
+    
+    [[11,1], [[4,0],[4,0],[3,0],[4,0],[4,0],[3,0],[4,0],[4,0],[3,0],]],
+    [[0,2], [[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[0,0],[0,0],[0,0],]],
+    [[1,2], [[1,0],[1,0],[3,0],[0,0],[0,0],[2,0],[0,0],[0,0],[2,0],]],
+    [[2,2], [[3,0],[3,0],[3,0],[2,0],[2,0],[2,0],[2,0],[2,0],[2,0],]],
+    [[3,2], [[3,0],[1,0],[1,0],[2,0],[0,0],[0,0],[2,0],[0,0],[0,0],]],
+    [[4,2], [[1,0],[4,0],[4,0],[1,0],[4,0],[4,0],[1,0],[1,0],[3,0],]],
+    [[5,2], [[4,0],[4,0],[4,0],[4,0],[4,0],[4,0],[3,0],[4,0],[4,0],]],
+    [[6,2], [[4,0],[4,0],[4,0],[4,0],[4,0],[4,0],[4,0],[4,0],[3,0],]],
+    [[7,2], [[4,0],[4,0],[1,0],[4,0],[4,0],[1,0],[3,0],[1,0],[1,0],]],
+    [[8,2], [[3,0],[4,0],[4,0],[3,0],[4,0],[4,0],[3,0],[4,0],[4,0],]],
+    [[9,2], [[4,0],[4,0],[4,0],[4,0],[4,0],[4,0],[4,0],[4,0],[4,0],]],
+    [[10,2], [[4,0],[4,0],[3,0],[4,0],[4,0],[4,0],[3,0],[4,0],[4,0],]],
+    [[11,2], [[4,0],[4,0],[1,0],[4,0],[4,0],[1,0],[4,0],[4,0],[1,0],]],
+    
+    [[0,3], [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],]],
+    [[1,3], [[0,0],[2,0],[2,0],[0,0],[2,0],[2,0],[0,0],[2,0],[2,0],]],
+    [[2,3], [[2,0],[2,0],[2,0],[2,0],[2,0],[2,0],[2,0],[2,0],[2,0],]],
+    [[3,3], [[2,0],[2,0],[0,0],[2,0],[2,0],[0,0],[2,0],[2,0],[0,0],]],
+    [[4,3], [[3,0],[3,0],[3,0],[4,0],[4,0],[3,0],[4,0],[4,0],[3,0],]],
+    [[5,3], [[3,0],[4,0],[4,0],[2,0],[4,0],[4,0],[2,0],[2,0],[2,0],]],
+    [[6,3], [[4,0],[4,0],[3,0],[4,0],[4,0],[2,0],[2,0],[2,0],[2,0],]],
+    [[7,3], [[3,0],[3,0],[3,0],[3,0],[4,0],[4,0],[3,0],[4,0],[4,0],]],
+    [[8,3], [[1,0],[4,0],[4,0],[0,0],[4,0],[4,0],[0,0],[0,0],[2,0],]],
+    [[9,3], [[4,0],[4,0],[4,0],[4,0],[4,0],[4,0],[2,0],[2,0],[2,0],]],
+    [[10,3], [[4,0],[4,0],[4,0],[4,0],[4,0],[4,0],[3,0],[3,0],[3,0],]],
+    [[11,3], [[4,0],[4,0],[1,0],[4,0],[4,0],[0,0],[2,0],[0,0],[0,0],]],
+];
+// convert 4x4 to godot
+var fourxfour_data = [
+    [[0,0],[0,0]], [[1,0],[1,0]], [[2,0],[2,0]], [[3,0],[3,0]],
+    [[0,1],[0,1]], [[1,1],[1,1]], [[2,1],[2,1]], [[3,1],[3,1]],
+    [[0,2],[0,2]], [[1,2],[1,2]], [[2,2],[2,2]], [[3,2],[3,2]],
+    [[0,3],[0,3]], [[1,3],[1,3]], [[2,3],[2,3]], [[3,3],[3,3]],
+    
+    [[4,0],[2,1]], [[5,0],[2,0]], [[6,0],[2,0]], [[7,0],[2,1]],
+    [[4,1],[1,1]], [[5,1],[2,1]], [[6,1],[2,1]], [[7,1],[3,1]],
+    [[4,2],[1,1]], [[5,2],[2,1]], [[6,2],[2,1]], [[7,2],[3,1]],
+    [[4,3],[2,1]], [[5,3],[2,2]], [[6,3],[2,2]], [[7,3],[2,1]],
+    
+    [[8,0],[1,0]], [[9,0],[2,1]], [[10,0],[2,0]], [[11,0],[3,0]],
+    [[8,1],[1,1]], [[9,1],[2,1]], [[10,1],[-1,-1]], [[11,1],[2,1]],
+    [[8,2],[2,1]], [[9,2],[2,1]], [[10,2],[2,1]], [[11,2],[3,1]],
+    [[8,3],[1,2]], [[9,3],[2,2]], [[10,3],[2,1]], [[11,3],[3,2]],
+];
+// convert 3x3 to 4x4
+var threexthree_data = [
+    [[0,0], [[0,0],[2,0],[2,0],[0,1],[2,1],[2,1],[0,1],[2,1],[2,1],]],
+    [[1,0], [[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],]],
+    [[2,0], [[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],]],
+    [[3,0], [[2,0],[2,0],[2,0],[2,0],[2,0],[2,0],[2,0],[2,0],[2,0],]],
+
+    [[0,1], [[0,1],[2,1],[2,1],[0,1],[2,1],[2,1],[0,1],[2,1],[2,1],]],
+    [[1,1], [[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],]],
+    [[2,1], [[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],]],
+    [[3,1], [[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],[2,1],]],
+
+    [[0,2], [[0,1],[2,1],[2,1],[0,2],[2,2],[2,2],[0,2],[2,2],[2,2],]],
+    [[1,2], [[0,2],[0,2],[0,2],[0,2],[0,2],[0,2],[0,2],[0,2],[0,2],]],
+    [[2,2], [[1,2],[1,2],[1,2],[1,2],[1,2],[1,2],[1,2],[1,2],[1,2],]],
+    [[3,2], [[2,2],[2,2],[2,2],[2,2],[2,2],[2,2],[2,2],[2,2],[2,2],]],
+
+    [[0,3], [[0,0],[2,0],[2,0],[0,2],[2,2],[2,2],[0,2],[2,2],[2,2],]],
+    [[1,3], [[0,0],[0,0],[0,0],[0,2],[0,2],[0,2],[0,2],[0,2],[0,2],]],
+    [[2,3], [[1,0],[1,0],[1,0],[1,2],[1,2],[1,2],[1,2],[1,2],[1,2],]],
+    [[3,3], [[2,0],[2,0],[2,0],[2,2],[2,2],[2,2],[2,2],[2,2],[2,2],]],
+];
+var inner_corners_data = [
+    [[1,0], [[1,1]]],
+    [[2,0], [[0,1], [1,1]]],
+    [[3,0], [[0,1]]],
+    
+    [[1,1], [[1,1],[1,0]]],
+    [[2,1], [[0,0],[0,1],[1,0],[1,1]]],
+    [[3,1], [[0,0],[0,1]]],
+    
+    [[1,2], [[1,0]]],
+    [[2,2], [[0,0],[1,0],]],
+    [[3,2], [[0,0]]],
+    
+    
+    [[4,0], [[0,1],[1,0],[1,1]]],
+    [[5,0], [[0,1]]],
+    [[6,0], [[1,1]]],
+    [[7,0], [[0,1],[0,0],[1,1]]],
+    
+    [[4,1], [[1,0]]],
+    [[5,1], [[0,0]]],
+    [[6,1], [[1,0]]],
+    [[7,1], [[0,0]]],
+    
+    [[4,2], [[1,1]]],
+    [[5,2], [[0,1]]],
+    [[6,2], [[1,1]]],
+    [[7,2], [[0,1]]],
+    
+    [[4,3], [[0,0],[1,0],[1,1]]],
+    [[5,3], [[0,0]]],
+    [[6,3], [[1,0]]],
+    [[7,3], [[0,1],[0,0],[1,0]]],
+    
+    [[9,0], [[0,0],[1,0]]],
+    [[11,1], [[1,0],[1,1]]],
+    [[8,2], [[0,0],[0,1]]],
+    [[10,3], [[0,1],[1,1]]],
+    
+    [[9,1], [[0,0],[1,1]]],
+    [[10,2], [[1,0],[0,1]]],
+];
+// covnert godot to preview
+let x = -1;
+var preview_data = [
+    [x,x,0],
+    [x,36,14,38,x,x,x,x,x,0],
+    [x,x,23,x,x,x,x,x,x,16,11],
+    [x,x,x,x,35,x,36,37,5,17,22,38],
+    [8,11,x,x,x,x,x,x,43,45,46],
+    [20,34,x,0,x,x,x,x,x,23],
+    [20,18,10,9,11,x,8,11],
+    [20,32,32,32,34,x,43,33,11],
+    [43,44,44,44,46,x,x,43,46]
+];
+</script>
+</body>
+</html>
