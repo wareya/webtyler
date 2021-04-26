@@ -34,4 +34,4 @@ Also supports outputting RPG maker autotile chipsets:
 
 The intended bitmask for the godot output is the following:
 
-![godot minimal bitmask]('etc/out bitmask.png')
+![godot minimal bitmask](etc/out%20bitmask.png)
