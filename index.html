@@ -203,6 +203,7 @@ window.onload = () =>
         canvas.width = 12*tileWidth;
         canvas.height = 4*tileHeight;
         let ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         if(mode == "minitiles")
             updateMinitiles(img, ctx);
         if(mode == "basic")
@@ -282,6 +283,7 @@ window.onload = () =>
             rpgmakercanvas.width = 2*tileWidth;
             rpgmakercanvas.height = 3*tileWidth;
             ctx = rpgmakercanvas.getContext("2d");
+            ctx.clearRect(0, 0, rpgmakercanvas.width, rpgmakercanvas.height);
             copyTile(output, ctx, [0, 0], [0, 3]);
             copyTile(output, ctx, [1, 0], [2, 1]);
             copyTile(output, ctx, [0, 1], [8, 0]);
@@ -306,6 +308,7 @@ window.onload = () =>
             previewcanvas.width = 12*tileWidth;
             previewcanvas.height = 9*tileHeight;
             ctx = previewcanvas.getContext("2d");
+            ctx.clearRect(0, 0, previewcanvas.width, previewcanvas.height);
             for(let y = 0; y < preview_data.length; y++)
             {
                 let scanline = preview_data[y];
@@ -383,6 +386,32 @@ window.onload = () =>
     dropzone.ondragleave = leave;
     dropzone.ondragover = over;
     dropzone.ondrop = drop;
+
+    dropzone.onclick = (e) =>
+    {
+        console.log("asdf");
+        let input = document.createElement("input");
+        input.type = "file";
+        input.onchange = (e) =>
+        {
+            // getting a hold of the file reference
+            for(let file of e.target.files)
+            {
+                if (!file.type.startsWith('image/')){ continue; }
+                
+                img = new Image();
+                const reader = new FileReader();
+                reader.onload = (e) =>
+                {
+                    load_image(img, e.target.result);
+                };
+                reader.readAsDataURL(file);
+                break;
+            }
+        }
+
+        input.click();
+    };
     
     let option_basic = document.getElementById("option_basic");
     let option_minitiles = document.getElementById("option_minitiles");
@@ -406,53 +435,60 @@ window.onload = () =>
         mode = "basic";
         reset_selected();
         option_basic.classList.add("selected");
+        updatePreviews(img);
     };
     option_minitiles.onclick = () =>
     {
         mode = "minitiles";
         reset_selected();
         option_minitiles.classList.add("selected");
+        updatePreviews(img);
     };
     option_4x4.onclick = () =>
     {
         mode = "4x4";
         reset_selected();
         option_4x4.classList.add("selected");
+        updatePreviews(img);
     };
     option_3x3.onclick = () =>
     {
         mode = "3x3";
         reset_selected();
         option_3x3.classList.add("selected");
+        updatePreviews(img);
     };
     option_4x4plus.onclick = () =>
     {
         mode = "4x4plus";
         reset_selected();
         option_4x4plus.classList.add("selected");
+        updatePreviews(img);
     };
     option_3x3plus.onclick = () =>
     {
         mode = "3x3plus";
         reset_selected();
         option_3x3plus.classList.add("selected");
+        updatePreviews(img);
     };
     option_rpgmaker.onclick = () =>
     {
         mode = "rpgmaker";
         reset_selected();
         option_rpgmaker.classList.add("selected");
+        updatePreviews(img);
     };
     // https://stackoverflow.com/questions/6333814/how-does-the-paste-image-from-clipboard-functionality-work-in-gmail-and-google-c
     document.onpaste = (e) =>
     {
-        var items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        let items = (e.clipboardData || e.originalEvent.clipboardData).items;
         for (let item of items)
         {
-            //var item = items[index];
+            console.log(item);
             if (item.kind === 'file')
             {
-                var file = item.getAsFile();
+                let file = item.getAsFile();
                 if (!file.type.startsWith('image/')){ continue; }
                 img = new Image();
                 const reader = new FileReader();
