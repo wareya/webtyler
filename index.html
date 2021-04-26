@@ -8,8 +8,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com/">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100&display=swap" rel="stylesheet"> 
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap" rel="stylesheet"> 
-    <script src="KaitaiStream.js"></script>
-    <script src="Png.js"></script>
 <script>
 'use strict';
 window.onload = () =>
@@ -732,10 +730,12 @@ window.onload = () =>
                 </div>
                 <p class="smol nobottom">Q: <i>Help! I pasted an image from an image editor, but<br>transparency isn't working, or all the pixels are shifted!</i></p>
                 <p class="smol">A: Try a different image editor or a different browser<br>(some combinations are broken), or drop a file instead.</p>
+                <p class="smol nobottom">Q: <i>Help! My colors are all messed up!</i></p>
+                <p class="smol">A: Color profile data is stripped from PNGs for<br>compatibility reasons. Save your PNGs as sRGB.</p>
                 <p class="smol nobottom">Q: <i>What are these margin offset things?</i></p>
-                <p class="smol">A: They control from where tiles are sliced during<br>reassembly, relative to the center.</p>
-                <p class="smol nobottom">Q: <i>Do you have any examples?</i></p>
-                <p class="smol">A: Yes, save as files then drag back to this page:<br><img src="etc/mini.png"><br>(platforms)<br><img src="etc/minitiles-grass.png"><br>(terrain)<br><img src="etc/minitiles-32.png"><br>(32x32)</p>
+                <p class="smol">A: They control where tile corners/edges are sliced.</p>
+                <p class="smol nobottom">Q: <i>Do you have any examples inputs?</i></p>
+                <p class="smol">A: Yes.<br style="margin-bottom: 2px;"><img src="etc/mini.png"><br><img src="etc/minitiles-grass.png"><br><img src="etc/minitiles-32.png"></p>
             </div>
         </div>
         <div id="previews" class="affect" style="flex-grow: 1;">
