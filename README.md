@@ -4,7 +4,7 @@ Use it here: https://wareya.github.io/webtyler/
 
 Autotyler JS is an autotile conversion tool for turning small/incomplete autotile tilesets into complete, fleshed-out ones.
 
-It supports seven different input formats and two different output formats, and displays a preview.
+It supports nine different input formats and three different output formats, and displays a preview.
 
 ![screenshot](etc/screenshot.png)
 
