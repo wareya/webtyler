@@ -32,6 +32,11 @@ Also supports outputting RPG maker autotile chipsets:
 
 ![rpg maker output](etc/grassrpgmaker.png)
 
+And GameMaker Studio 2 Auto Tile tilesets:
+
+![gamemaker output](etc/gms.png)
+(The layout is different from the template, but the order is the same, and this matches GM's documentation)
+
 The intended bitmask for the godot output is the following:
 
 ![godot minimal bitmask](etc/out%20bitmask.png)
