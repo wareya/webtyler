@@ -73,6 +73,9 @@ window.onload = () =>
     let rpgmakercanvas = document.createElement('canvas');
     rpgmakercanvas.width = 2*tileWidth;
     rpgmakercanvas.height = 3*tileHeight;
+    let gms2canvas = document.createElement('canvas');
+    gms2canvas.width = 12*tileWidth;
+    gms2canvas.height = 4*tileHeight;
 
     function copyTile(img, ctx, to, from)
     {
@@ -250,6 +253,19 @@ window.onload = () =>
             update3x3(img, ctx);
             fix_inner_corners(img, ctx, [3, 0]);
         }
+        if(mode == "5x3")
+        {
+            update3x3(img, ctx);
+            fix_inner_corners(img, ctx, [4, 0]);
+
+            copyTile(img, ctx, [0, 0], [3, 0])
+            copyTile(img, ctx, [0, 2], [3, 1])
+
+            copyTile(img, ctx, [0, 3], [4, 1])
+
+            copyTile(img, ctx, [1, 3], [3, 2])
+            copyTile(img, ctx, [3, 3], [4, 2])
+        }
         if(mode == "rpgmaker")
         {
             // convert rpgmaker to minitiles
@@ -326,6 +342,34 @@ window.onload = () =>
             {
                 rpgmakeroutput.classList.remove("smooth_image");
                 rpgmakeroutput.classList.add("pixelated_image");
+            }
+            
+            gms2canvas.width = 12*tileWidth;
+            gms2canvas.height = 4*tileHeight;
+            ctx = gms2canvas.getContext("2d");
+            ctx.clearRect(0, 0, gms2canvas.width, gms2canvas.height);
+            for(let i = 0; i < godot_to_gms.length; i++)
+            {
+                let godot = [i%12, Math.floor(i/12)];
+                let j = godot_to_gms[i];//+1;
+                if(j <= 0)
+                    continue;
+                let gms = [j%12, Math.floor(j/12)];
+                copyTile(output, ctx, gms, godot);
+                //copyTile(output, ctx, godot, gms);
+            }
+            let gms2output = document.getElementById("gms2");
+            gms2output.src = gms2canvas.toDataURL();
+            
+            if(gms2canvas.height > 64)
+            {
+                gms2output.classList.remove("pixelated_image");
+                gms2output.classList.add("smooth_image");
+            }
+            else
+            {
+                gms2output.classList.remove("smooth_image");
+                gms2output.classList.add("pixelated_image");
             }
             
             previewcanvas.width = 12*tileWidth;
@@ -482,6 +526,7 @@ window.onload = () =>
     let option_3x3 = document.getElementById("option_3x3");
     let option_4x4plus = document.getElementById("option_4x4plus");
     let option_3x3plus = document.getElementById("option_3x3plus");
+    let option_5x3 = document.getElementById("option_5x3");
     let option_rpgmaker = document.getElementById("option_rpgmaker");
     function reset_selected()
     {
@@ -491,6 +536,7 @@ window.onload = () =>
         option_3x3.classList.remove("selected");
         option_4x4plus.classList.remove("selected");
         option_3x3plus.classList.remove("selected");
+        option_5x3.classList.remove("selected");
         option_rpgmaker.classList.remove("selected");
     };
     option_basic.onclick = () =>
@@ -533,6 +579,13 @@ window.onload = () =>
         mode = "3x3plus";
         reset_selected();
         option_3x3plus.classList.add("selected");
+        updatePreviews(img);
+    };
+    option_5x3.onclick = () =>
+    {
+        mode = "5x3";
+        reset_selected();
+        option_5x3.classList.add("selected");
         updatePreviews(img);
     };
     option_rpgmaker.onclick = () =>
@@ -706,9 +759,10 @@ window.onload = () =>
             <div id="option_basic" class="option affect"><span class="basicbg">Basic</span></div>
             <div id="option_minitiles" class="option affect selected"><span class="minitilesbg">Minitiles</span></div>
             <div id="option_4x4" class="option affect"><span class="fourxfourbg">4x4</span></div>
-            <div id="option_3x3" class="option affect"><span class="threexthreebg">3x3</span></div>
             <div id="option_4x4plus" class="option affect"><span class="fourxfourplusbg">4x4plus</span></div>
+            <div id="option_3x3" class="option affect"><span class="threexthreebg">3x3</span></div>
             <div id="option_3x3plus" class="option affect"><span class="threexthreeplusbg">3x3plus</span></div>
+            <div id="option_5x3" class="option affect"><span class="fivexthreebg">5x3</span></div>
             <div id="option_rpgmaker" class="option affect"><span class="rpgmakerbg">RPG Maker</span></div>
             <!-- <div id="option_godot" class="option affect"><span class="godot">Godot</span></div> -->
         </div>
@@ -769,8 +823,12 @@ window.onload = () =>
             <img id="output" src="data:image/png;base64,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" class="pixelated_image">
             <p class="smol"><i>Tip: Right Click -&gt; Save Image As...</i></p>
             
-            <p>RPG Maker</p>
-            <img id="rpgmaker" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAwCAYAAABwrHhvAAACOklEQVRYhe2YMW6DQBBF5yapksYSDS5BVLlAjHwBXFFR+gKmI6kjVymTKyBFuUAOYSX32BTOXw3DwuyCpTiWkUaLd3dmHrDDfkP0e+wPW7NuC4NzVx/O0Urfp+2j+Xh5t7a6f7DG+9dtYZImN70AaDEBbdLknbH9YWuiMuuARWVmNqvC1NWuY0jO+5ImN1GZHS+IB0CLBIBAH3eU567kAJB9mJ80uSEeYN0WtkWCNE5tIjhhDFedNLkz+RAAYKMyM5Q0uXl7frUdCLhZFRYA5xhL49Tc3dyaqMw6AX0BOAgREX1/fvXINqvjFSMAH0vj1CwXsSEiGgruA1BXuy6AvEVYwXJsuYi9AHgVjALIktGMA4T4ucwCaLULq6tdB8DXb8jsI+C16qpdeWtdj0Dz814D2sIZAwhJfgWwAFjNQ6U3lJwDaH4qACCwwseM+ywXca+0tKSylGcf/A6EvkfsoekB1xh2yyEfXz0xqge4BkCLsf1hq2oITU+oekDu+5jD+8c0hKYnvPSA1ACYjwTSB9v3ui1UPeGlB/Cb6wKsaJcPn6vpCSLS9QBPKsWHy4ePaXqiAyCDhtT2UL1reoKIwvXAXHMCzDVfPVBXuz6A1ANTzVcPyP2ktwbmAPjOuwJcHoDvO8NZhjLA2bwHpmr9Mf+6CnwPTNH6mn/QGpi6D4z5XwH+D8Cp9ID0P289MLX2T6oHptb+yfTAnGfuO+/yAEKqpQdA5P99YCwg/qoHJ+cQPt8H5poz+V8dP3HKlNFMitgZAAAAAElFTkSuQmCC" class="pixelated_image">
+            <div style="display:flex; flex-direction:row; margin-top: -8px; width: 384px;">
+            <div style="flex: 1; width: 35%"><p>RPG Maker</p>
+            <img id="rpgmaker" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAwCAYAAABwrHhvAAACOklEQVRYhe2YMW6DQBBF5yapksYSDS5BVLlAjHwBXFFR+gKmI6kjVymTKyBFuUAOYSX32BTOXw3DwuyCpTiWkUaLd3dmHrDDfkP0e+wPW7NuC4NzVx/O0Urfp+2j+Xh5t7a6f7DG+9dtYZImN70AaDEBbdLknbH9YWuiMuuARWVmNqvC1NWuY0jO+5ImN1GZHS+IB0CLBIBAH3eU567kAJB9mJ80uSEeYN0WtkWCNE5tIjhhDFedNLkz+RAAYKMyM5Q0uXl7frUdCLhZFRYA5xhL49Tc3dyaqMw6AX0BOAgREX1/fvXINqvjFSMAH0vj1CwXsSEiGgruA1BXuy6AvEVYwXJsuYi9AHgVjALIktGMA4T4ucwCaLULq6tdB8DXb8jsI+C16qpdeWtdj0Dz814D2sIZAwhJfgWwAFjNQ6U3lJwDaH4qACCwwseM+ywXca+0tKSylGcf/A6EvkfsoekB1xh2yyEfXz0xqge4BkCLsf1hq2oITU+oekDu+5jD+8c0hKYnvPSA1ACYjwTSB9v3ui1UPeGlB/Cb6wKsaJcPn6vpCSLS9QBPKsWHy4ePaXqiAyCDhtT2UL1reoKIwvXAXHMCzDVfPVBXuz6A1ANTzVcPyP2ktwbmAPjOuwJcHoDvO8NZhjLA2bwHpmr9Mf+6CnwPTNH6mn/QGpi6D4z5XwH+D8Cp9ID0P289MLX2T6oHptb+yfTAnGfuO+/yAEKqpQdA5P99YCwg/qoHJ+cQPt8H5poz+V8dP3HKlNFMitgZAAAAAElFTkSuQmCC" class="pixelated_image"></div>
+            <div style="flex: 2; width: 65%"><p>GameMaker Studio 2 (47)</p>
+            <img style="max-width: 95%; height:64px;" id="gms2" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAABACAYAAABMbHjfAAAGX0lEQVR4nO2dMW4rNxCGeZNUeY0BN3IpwZUv4BV8Aaly9UpdIK9TUgeuXCZXMBD4AjmEkdxjXzXy7Ji7JOfn7pBaCiCeLOnjcP6Z2ZWoWT3nwNv76z/92OgeHi9j7DXOOffyceqf3g79H6ffk3mN/ae3Q78973vyIdU+55v/9fsP3X58/62fGmR87Hly/vb5vj92h2ReY3973ve3z/f909tBZZ/zzf+6/V+kAKaep2r0OR/Da+yTve15r7LP+eZ/3f6bF0BIyDkEILHpqJNqn/PN/7r9Ny8AvqClBJB2tfanuOZ/Hf4XUQCNb7wVP2sB8E/h2sU3vvFz8nABcCNttFHbgAtg7j3bxjd+Th4uAHnKeX/Nu2fb+MbPyWcvAO3iG994C74VQONXzbcCaPyq+VYAjc/C0wfQ2vhsBcA/hSMOrIHvHh77u5tNf3ezqZ6/u9l82VpM0c2ahwtAGm8jPChxtPqVxNNBUKtFCfzq+8ER/6c0iPUfXb+lfWopfvk4DWIp7/teR92olrxbez846r9zzv3/73+jawytX8OXZJ/0o6Kgf7fn/eA5us8T9+XjZM67tfeDo/5TAmn91/Al2aeDx8vHqb99vv/yGC8W/hx/3JJ3a+8HR/23SMCS7D+9Hfpj93kEJk3pud1mdzki3z7fX5Lv2H0elS15xx1KFfAa+sFR/y0SsCT7/CDC/6b7lID8Ma63Nd/6+UHeMgFL4OXZlCfXsTv03cPjIOnkwcaab/38ID+VQGvgrfWH46fdP23jcx9Zbhmuia99tH5+kA99F3LtvLX+cPzkKeP9ta5+bms+tI9+7by1/nD85ASoAGvjQx8ir5231h+On/UCauetE9Cat9Yfjp/1AmrnrRPQmrfWH44fh5EFrJW3TkBrXmpoxavjZ9GP3T1g/eQl8dYJqOHR9XNeJqA2iZeMn9Rv8X5stJ+8dh7VryT9tetGRlb90X7q1L1ZOmuQAyjP1xnTz5+bR/emU+3n2Bu3vB5C6gf38wsfxuYKXg+g7aeOOV3JvVmqYqpehNf08+fkNevnY43XQ/j0V/fzszl8c0VdD4D0U8cEYOw9XGwCTfGafv6cvGb9fKzxegipP5J/vIB9cwWvB0D7qa0LQNPPn5NHC2CN10PIAkCvB6C/fXMFrwdA+6mtC4AHxIpHCkBjHy0AaXfp6yG4fmj+bc/7/u8//7oUpJwreD0A2k9dQgHUxudK4BJ4tADgfn5m3zdXkA85T0Mrno/nuwBr5FH9SuKnCmAJ/Xz2KcmjeP6ipUZJv2tjwV/ToG1QK/009gf80v3Y8giwNh7VrzSeaxAzcuuXav8LL085tEjtKTOGp6OAPAWuhUf1K4kPfQ8wt34a+wNeLkArXgo/JcAaeFS/kvjQh+C59dPYH/AWAlonoDWP6lcS3wrAIIFK5On9K6JdjXyuAljS/oDPJeCSCWSdwJKnv6k1V6NbrXyOAlja/oBH++FlAoV4zjrnku1L3to+3V/rSE3A3PrBBcCrMHZw4ymcj6/dfrvZ65dqn4/LJNp+6th+bt9cY/Om8Kl72z++57+eANlb1/CyHz8mfmP6ofFPXb/UD41/Fv+RfupQP/dYbzd1EqJ8zClX7hHz96Do9QDO2f//AFPxC+mHxl+zfp/+2vjD/qP91KF+7qne7hx8TAGMvQ+lowFyPQAlQIp9XwGk8LwfPxS/kH5wP71i/VJ/JP6o/4ME0PRTx/Rz030KGp8L5dECQK8HsCgA3vUYE7+Q/lA/fYYCQPMH8d+h/dQx/dz88e153+82u/7bL79eFoHwaAHwhKqlAHghxMRvSj+4nx4sADT+qP+DAGr6qWP6ueXrdpvd4AiM8DkKAOEtC0DyY/Gb0g+NP1oAaPxz+A/1U4eSR7LH7uDdx5+Tl3Pk5KcSIEa/OXgZvyn90Phr1p8z/jn8X/z34XPu41vzqH4WvPX6rfX3FgA6uIE5+8FL46V+sfOMfQ+A8qFhvX5r/X384r8PT1UoT4E18j79YufhbyFy8qWv31p/yS/+46hTAtTG+/SLnYcnUE6+9PVb698KoBVAK4BrKwB637c03wogTwEsqX+RBYAkMP9kn+o8ytONuBQ/KIFQHi2AJddvrb+XX/L34TnrnE0/Pvcd5WUQkLm0PNKPb7F+a/2/gDKBQ4NPlML5eNR+uzX9kNtPb12Q5QEkErgAAAAASUVORK5CYII=" class="pixelated_image"></div>
+            </div>
             
             <p>Preview</p>
             <img id="preview" src="data:image/png;base64,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" class="pixelated_image">
@@ -872,6 +930,15 @@ p {
     max-width: 384px;
     height: 96px;
 }
+#gms2 {
+    display: block;
+    margin: auto;
+
+    object-fit: contain;
+    min-width: 64px;
+    max-width: 384px;
+    height: 96px;
+}
 div.affect {
     background-color: white;
     box-shadow: 0 0 10px rgba(0,0,0,0.25) inset;
@@ -935,7 +1002,7 @@ div.option {
     vertical-align: middle;
     font-size: 16px;
     font-weight: 0;
-    height: 74px;
+    height: 63px;
     color: white;
     text-shadow: 0px 1px rgba(0, 0, 0, 0.65), 1px 1px rgba(0, 0, 0, 0.65);
 }
@@ -1005,7 +1072,7 @@ div.selected {
     background-position: center;
     background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAL+SURBVGhD7Zc7aFNhFMfPTQSjVGML7dA2gzEYoWCHii4Fp04OQq2CIDi4qjh2TBEFB8lQcXFqFSdpB1HEgFqUZDG0jVZjrYU+khBSC7a12Ipc/Z/khDSP9j7ysOH+IPnO/c75n/ud+zgfl4QHc/3qhcAVVez8uWK+7rt922rKqc+1ZQQK/uAMTKeo52gzYQTxyA9qPe5kG4gP49CTGfbBBvkajOBynyfrM6pHrNi5uQbvhChyf0yxy+KjozO00uLg8eJZL719+oU2f9tpNblBseAi+5A4tecPH8OHmGIaLAIxp7pd9O51wpRe4vNzIe6Qp9ln33fG60PizmgrbZwgco810efD6xyw8i1FjhdrtPd0CxeC46XoMh080kzHgk7qveml2e/rBRocxxqW+URr/nlT+kT/NG20K2y3jTpotTN9UREHbFj89Ybz5Ha5+UoAzOEEueD4ZNKTtRGf8h8oqUGs+IAZfX4u5XGSfj2Ls22ff/lpwD/g901GJml/XOHE4aUP1PaziX92m40SyhLb8EmMUEyD40ZnI/vKoe/wdGyJc8RUnh9/HlL4JV4ML6jDD4c5IZhdmE0HT4UzM0RdHV0ZSzvl0udqsbaJ6ATb76fC6QLeDL1SBx/d48ndwFx8jsctBfCMCXIvwLVLVzOWdrTqg+MhGgmMsJ0tAI/QzMev7DQDbjlObjSPVj3icBdQgC0zZ3rxgtk8evXZAnYrVgG1pmwFSM+WUS9a9fICC9yFbt+4pRo9cS3QvA9Uq7eXopgeXUrXPoA7U43eXopienmMNO8DRk8uVFJvdaFaU98FSGuVUS+V0hfsA9b3wD+qtWegI1nfA9thNo9evdVGa41VgFCqZ2tFq15eYIG7kPU9UIJK6NGlrO8BvVRSb3WhWlPfBUhrlVEvldIX7AN19T1gtHdXa89AR9pxH8AtM9K7jeoErXrE7bgPGF2EUZ2gV2+1USG/U+jFqJ4LaO9yKZLASCJ5JvGrtF5i8fzjmP+Ecz29Kpz/O7L4OoDoLyNhY4hfjpj6AAAAAElFTkSuQmCC");
 }
-.threexthreebg {
+.fivexthreebg {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1016,6 +1083,7 @@ div.selected {
     background-repeat: no-repeat;
     background-size: contain;
     background-position: center;
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAAAwCAYAAACG5f33AAAACXBIWXMAAA7CAAAOwgEVKEqAAAAFSUlEQVRoQ+2aS2hcZRTHzySlRohJqSSL2EGMaVMU2kVKpaXQVdy4EPsQCwUXxY1YEVyYZcAHutAsKiIUF6niQkK7EKUQ0JaW6cah0DY0NlGJtolhYkvTkjaWMOZ/Mud6envvne9xZ5JM5gfT73X+3z333OF+J6dDwvGJvuKrw0eK0g/PRa3t+fRAoiZNve5LqwnbRs3F6WVtoO+z4pnBn4LP/t59wUfPwxa+Q5uRDYavFah3SxuhBZOXblPHtlbuA1lDOzg0zmvog7AGLXj9QFew5qqHrfT1Xsc+uUCXvjhb1v84X0Qv2tFT47Rzuos6s51sI+RH8nT08FuUu3ihNEP0Y/Yizf5WoK2vdFGj3mC2vYnbQy9307nvf6V/HzTSnel5upG7zmtwprBugcdYg02UBo7D5oU9WTr/85SXXuzDe8FuQ1db/wdDh/qT/I/zRfTi1/bRjkeCB6YKU7SwsFAaLTHW+jfb/7H+NjU+/lJ3v2wwv4Oo8+xGuvrMHF8AUW46fZce29vOgcR4ZvQmtTzbRltzrbTv/W76/Z+5RzQY32i+yY7eHfjTSz/Vd43mN2W4/9SpJrqzfemhwg7oAET5/2BwJlEP+5nsPO2k53gcBgHsaO8ojZZoHLnHwc7PXKYGXPzt5oM8gacHMIcb1GCMr7j0YV8YeCJWA1tZAz768F6Zb6fp/g+T3DfxP0kPnbY1ARqAfRvOvzuU2b1jdzCBRXk6GLdvbPv/aS2uiY0QpcFYbNPQa53YtTS38DvMxP8kPfqYdwG6hlKfkY3kYrdmb/F489iTwVr4YjJ+bf2L3NfraemBzMO3e/fnuB9G26Bvqw+DA0S3UfATwNF87JvPeWI1MDE5we0vI3kn/7UeKQoPHAkc4JEH+gZw7Ntiqs8tphMnh09yXweQJwwI60Xr6j87cD3/V3H8ythDuY4LUTmTDaZ62OFbJAG09V/rP3rnwyD4Lv4H70Df4Am++7jql8v/hw6ROvbUA+hJPYAl8P5zIbUAigOujpjqsS5piAthPU5kfc1y1wewgQ4fPsVwEpkIVwo6j0Nr63+aet4gLo+qVm4XR5Qep6RpHmiqB1KV+q73Ky5xvfH0x0GpS+akj3ogWuj4n6Q8Ck/GNjfSVEKPOXwLJAC2/of1EhyXeqJRHuh680I19K7+S/BQrZEWAULRQYIoBQiMxQ4luW1v7i2u+VMYwUBgUGQAaCVACBzqkQBzKHthHvYS1DUfQATDp5645gPoW09MDCBetrq1pVJ6SSPKYavXNUP0TeqJfAohDdBH/kpH52Fobf1PUx9swDMeROVcNpjqcaIm5YHl9klbzxvUWj2w3D5p6o3yQBt893HVh3W2+7jq1/wp7Es9gJ7URAA39WQzeC8BaeMIv/+Ajz54iZ74+gS6zugL9zzfU+qZY6qXGwA6CAD/RSlrSYR1goueO6u9HricsANxeWC1crs4ovQ4HV3qeVLD02vyM7s4TVy/5uqBcnNR9TxB1tCm+ftEozzQ9eaFSuoleHH1PHxkDX20soYgRGl0DVD39V41Uw+UwOCPfIBWbhA3jtKTruEhABijXHX0vV2RmpYveZrnar4eiJup9O8bdR/UVD2wGr9v1Dqxq8l6IG4QyM1W4/eJQRqjU4aVTjgPrLb/+vqBAzyziGvuVomcL4rc4onsU89LwsUHdsC2HhaHq04w1cNO54Fp+Q9sfYjNA10uDlx1QlrX9fHDRrvqT+HlJrUA4ivtg68+DVx84ADa1MOigAbvA3wqrRdbef8BX/+Bqw+BE8C0Hrbc6OBpqul/nA91rCD6D991cRjr30WRAAAAAElFTkSuQmCC");
 }
 .fourxfourplusbg {
     display: flex;
@@ -1214,7 +1282,7 @@ var inner_corners_data = [
     [[9,1], [[0,0],[1,1]]],
     [[10,2], [[1,0],[0,1]]],
 ];
-// covnert godot to preview
+// convert godot to preview
 let x = -1;
 var preview_data = [
     [x,x,0],
@@ -1226,6 +1294,12 @@ var preview_data = [
     [20,18,10,9,11,x,8,11],
     [20,32,32,32,34,x,43,33,11],
     [43,44,44,44,46,x,x,43,46]
+];
+var godot_to_gms = [
+    43, 36, 24, 38, 15, 23, 22, 14, 35,  4, 21, 37,
+    33, 20, 16, 28, 18,  2,  3, 27, 17,  6, -1,  7,
+    45, 42, 32, 40, 19,  9,  5, 26, 10,  1, 11, 25,
+    47, 44, 34, 46,  8, 30, 31, 12, 41, 29, 13, 39
 ];
 </script>
 </body>
