@@ -266,6 +266,61 @@ window.onload = () =>
             copyTile(img, ctx, [1, 3], [3, 2])
             copyTile(img, ctx, [3, 3], [4, 2])
         }
+        if(mode == "5x2")
+        {
+            // convert 5x2 to 5x3
+            let temp_canvas = document.createElement('canvas');
+            temp_canvas.width = tileWidth*5;
+            temp_canvas.height = tileHeight*3;
+            let ctx2 = temp_canvas.getContext("2d");
+            copyTile(img, ctx2, [4, 1], [3, 0])
+            copyTile(img, ctx2, [4, 0], [4, 0])
+            copyTile(img, ctx2, [3, 2], [3, 1])
+            copyTile(img, ctx2, [4, 2], [4, 1])
+            copyTile(img, ctx2, [3, 0], [2, 0])
+            copyTile(img, ctx2, [3, 1], [2, 1])
+            copyTile(img, ctx2, [0, 0], [0, 0])
+            copyTile(img, ctx2, [0, 2], [0, 1])
+            copyTile(img, ctx2, [2, 0], [1, 0])
+            copyTile(img, ctx2, [2, 2], [1, 1])
+            
+            copyTileQuadRaw(img, ctx2, [1, 0], [0, 0], [1, 0])
+            copyTileQuadRaw(img, ctx2, [1, 0], [1, 0], [0, 0])
+            copyTileQuadRaw(img, ctx2, [1, 0], [0, 1], [1, 0])
+            copyTileQuadRaw(img, ctx2, [1, 0], [1, 1], [0, 0])
+            
+            copyTileQuadRaw(img, ctx2, [1, 2], [0, 0], [1, 1])
+            copyTileQuadRaw(img, ctx2, [1, 2], [1, 0], [0, 1])
+            copyTileQuadRaw(img, ctx2, [1, 2], [0, 1], [1, 1])
+            copyTileQuadRaw(img, ctx2, [1, 2], [1, 1], [0, 1])
+            
+            copyTileQuadRaw(img, ctx2, [0, 1], [1, 0], [0, 1])
+            copyTileQuadRaw(img, ctx2, [0, 1], [1, 1], [0, 0])
+            copyTileQuadRaw(img, ctx2, [0, 1], [0, 0], [0, 1])
+            copyTileQuadRaw(img, ctx2, [0, 1], [0, 1], [0, 0])
+            
+            copyTileQuadRaw(img, ctx2, [2, 1], [1, 0], [1, 1])
+            copyTileQuadRaw(img, ctx2, [2, 1], [1, 1], [1, 0])
+            copyTileQuadRaw(img, ctx2, [2, 1], [0, 0], [1, 1])
+            copyTileQuadRaw(img, ctx2, [2, 1], [0, 1], [1, 0])
+            
+            copyTileQuadRaw(img, ctx2, [1, 1], [1, 1], [0, 1-1])
+            copyTileQuadRaw(img, ctx2, [1, 1], [0, 1], [1, 1-1])
+            copyTileQuadRaw(img, ctx2, [1, 1], [1, 0], [0, 2-1])
+            copyTileQuadRaw(img, ctx2, [1, 1], [0, 0], [1, 2-1])
+            
+            // handle 5x3
+            update3x3(temp_canvas, ctx);
+            fix_inner_corners(temp_canvas, ctx, [4, 0]);
+
+            copyTile(temp_canvas, ctx, [0, 0], [3, 0])
+            copyTile(temp_canvas, ctx, [0, 2], [3, 1])
+
+            copyTile(temp_canvas, ctx, [0, 3], [4, 1])
+
+            copyTile(temp_canvas, ctx, [1, 3], [3, 2])
+            copyTile(temp_canvas, ctx, [3, 3], [4, 2])
+        }
         if(mode == "rpgmaker")
         {
             // convert rpgmaker to minitiles
@@ -333,7 +388,7 @@ window.onload = () =>
             let rpgmakeroutput = document.getElementById("rpgmaker");
             rpgmakeroutput.src = rpgmakercanvas.toDataURL();
             
-            if(rpgmakercanvas.height > 128)
+            if(rpgmakercanvas.height > 96)
             {
                 rpgmakeroutput.classList.remove("pixelated_image");
                 rpgmakeroutput.classList.add("smooth_image");
@@ -527,6 +582,7 @@ window.onload = () =>
     let option_4x4plus = document.getElementById("option_4x4plus");
     let option_3x3plus = document.getElementById("option_3x3plus");
     let option_5x3 = document.getElementById("option_5x3");
+    let option_5x2 = document.getElementById("option_5x2");
     let option_rpgmaker = document.getElementById("option_rpgmaker");
     function reset_selected()
     {
@@ -537,6 +593,7 @@ window.onload = () =>
         option_4x4plus.classList.remove("selected");
         option_3x3plus.classList.remove("selected");
         option_5x3.classList.remove("selected");
+        option_5x2.classList.remove("selected");
         option_rpgmaker.classList.remove("selected");
     };
     option_basic.onclick = () =>
@@ -586,6 +643,13 @@ window.onload = () =>
         mode = "5x3";
         reset_selected();
         option_5x3.classList.add("selected");
+        updatePreviews(img);
+    };
+    option_5x2.onclick = () =>
+    {
+        mode = "5x2";
+        reset_selected();
+        option_5x2.classList.add("selected");
         updatePreviews(img);
     };
     option_rpgmaker.onclick = () =>
@@ -755,7 +819,7 @@ window.onload = () =>
     <a href="https://github.com/wareya/webtyler/" target=_blank style="float: right; position: absolute; text-shadow: none; font-family: Roboto; font-weight: 300; right: 25px;">Github</a>
     <div id="app" class="affect">
         <div id="options" style="width: 200px; min-height: 10px;" class="affect">
-            <p>Modes</p>
+            <p style="margin-top: 5px;">Modes</p>
             <div id="option_basic" class="option affect"><span class="basicbg">Basic</span></div>
             <div id="option_minitiles" class="option affect selected"><span class="minitilesbg">Minitiles</span></div>
             <div id="option_4x4" class="option affect"><span class="fourxfourbg">4x4</span></div>
@@ -763,11 +827,12 @@ window.onload = () =>
             <div id="option_3x3" class="option affect"><span class="threexthreebg">3x3</span></div>
             <div id="option_3x3plus" class="option affect"><span class="threexthreeplusbg">3x3plus</span></div>
             <div id="option_5x3" class="option affect"><span class="fivexthreebg">5x3</span></div>
+            <div id="option_5x2" class="option affect"><span class="fivextwobg">5x2</span></div>
             <div id="option_rpgmaker" class="option affect"><span class="rpgmakerbg">RPG Maker</span></div>
             <!-- <div id="option_godot" class="option affect"><span class="godot">Godot</span></div> -->
         </div>
         <div style="margin: 5px;">
-            <p>Autotyler</p>
+            <p style="margin-top: 5px;">Autotyler</p>
             <div id="dropzoneWrapper">
                 <div id="dropzone" class="noselect affect" style="opacity: 1; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAAAQCAYAAACBSfjBAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAALrSURBVFhH7ZbPS1VBFMfHu2hlLwl18UqEZxYS/VCjH+4tolUm0aLsH8jAVT/+gKSVUEFt04gWYSuJkLYvoiwKI8hnIIGRBZaLkja3+z3eM5w3zL1z351HJvQBOWfOzJlz5szznmkYHbmmQOvI93D6wze1b2pHA/SlsSaS0sb6mxOVEJIcI/q6j4SxWsXNe7diTanhsxdIll8/U5PTk6QP9A/ovbLGlOvuPvyojn/q0esOP92jurv2097AFh/cLk6oxbcr5JuUO0jyl1ABOYH+nc0KEiBAcW+BJDg/WNJzWHfj+nN1ZtMxKuLQuaGwMjtHxTGZeTdDweUcbAuLC1RAjg1cMTlHFA7roAPY3z+aVwe/dKpSW4lsjC3+47ZX6sf8V9V1sgOXE1vt2PwlAR8ACbBEYgjAB4IOMOZ1Wzpa1IPfT/TtJQUAaXO1xIQOyetwiWy3FY+xxcd6+GUhLf9AJgAgYUOBKNHLFbLDtqvcRHas5wPWAzPm5jsB2WFT95eqYqKYGCOXi5cO6bVJxbMBX6yvxxkCJDbceJo2RHIANgRhcECeI6JDrU59jgd+ZI2JOb5kLkD0LSQp/bLAxeb9fAjoQ3qgjwbYUN4Mxq1bW8hmzhUaC/ob6IMtJsYcE/F5TuYhMcdZ
                                                                   nWfv9x/CGnOTyyjKNgZz7tfqTdBf4AEvJoIEwvG90GaTzGHD8zrlmbZfzLpLiZyWLP3VhtHLZsl1wAdBFIX38o+QSnxEbAV3AeOx8+5SjjiTfcZBpbykT0599s7y50lgvfyqg+Y7DTzbt7YN5fsdhnPYOtGH46+K74rpYD3/9DTSdak0ib9Imvvv8bf+qJvKf2vlnCoh/n40IFXBbz3Z0QzK4DoJ5fL9ezL70fgMyvCf+8hYyr58v1ESujF2lweDRUyEO4YKLB1+AJjI+MU66Cy4WQBOJOrL3M6a92B5ra/Tu7o01O0YOJOUFuPwlVMA6ENbyC5AFJMWf3PEjP48LVOoPgCVePDNNPdgAAAAASUVORK5CYII=&quot;); image-rendering: crisp-edges;"><span>Drop Image File Here<br>(Or Paste Image)</span></div>
@@ -819,13 +884,13 @@ window.onload = () =>
             </div>
         </div>
         <div id="previews" class="affect" style="flex-grow: 1;">
-            <p>Godot</p>
+            <p style="margin-top: 5px;">Godot</p>
             <img id="output" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAABACAYAAABMbHjfAAAHM0lEQVR4nO1dsW4bORDln6RKmgBulFILV/6Bk+AfkCtXKfUDSae7OlB1ZfILBg73A/cRxuU/NsXd0COKS3I4sxyOdgUQKy/3cd7Mm/GuaFJ27v/X+fU4Pr4cRngfOwfv4YhfOXysb3vak23W4qf4//3nX+NU2z385hs+//hyGLen/SSvOfhP4fF1fxx/L+KPG1e/Gvsa8UvmL3TCEQjCcXvaX/SdX4/j3fP9VfBieIyBI/SdX48kmzX4HP+vn7+MqQbi4XPb0368e74nx2xO/++e78en3aGIP25S+lHst4xfNn+xA3CEC2BAOIeJw/scPsTANfg8xSYVn+NfUgDhue1pPz7tDle25uBfggc+pfxxk9CPar9l/HL6O+zA48vBH+GCYTN4EJCGvjAAU/gQA9cDwRDztHsTRAKf4l9TACA2HndO/ik8+EThjxtXvxr7reOX0t9tT/vxx7fvnhBcBIMMm8G/h75hM4wf3r33ZHJ4+BmPA8GIYfC1EvgU/5oCwEK24J/C44SqKQCufhz7reKX0t8559zPf/69qkwYBBzAfcNmGD993PjPADk8Jj0VPIzBfRL4FH9OAbTin8Jz+XP1sxC/XP76AISDwif4sO/Tx020AKbwuSCkgieBT/FvYb9nvAX95tTfOfffVCA2lmvhAFS8dsP8tbloN4v6ServE7i0ff38JVoA3IYJzokP+be23xvemn7S+vtHGOgsvbWEj0AUfGpczjileMxfw35PeIv6SeoffYanDkDFp8ZtgU8VgAX+kniL+knqvxaAQQEl8Rb1k9R/LQCDAkriLeonqX83BQAfYFrgYwXQ0v4cCVBrfy0AYgBi00i1BQQtnKaaEx/yb20/l8At7IcxkPwF1sJ/Dj6Wvy4cINfCAVY8Dc9t1vlrt+K/A2BQah6VOjcLC5cAz1lPTsX3wJ87t63tP25c/x3zJRG/5DwwgGO3kVp8bD14bJHVXHht/tRbe2/+4yaxH4Hz4sbPByA1wNRzFA4gBR+uB+euJ6fitflTC6A3/3Hj+t+iAFLxUymAcAUfZz15DV6bP7cAtP0PuXD81ygAHD+VAgiJcNaT1+B74V/SevY/5FGD1ygAzFu1ALgJUIu3zv+W/NcsAG9/KgD4UzQ+X/p3gCk8JXhz4K3zvyX/5yyAYvvhlFGu3dJ+AIv8b8l/bgGI2KfMTcd+g9TMcdfMOUvgrfO/Nf+5BSBif8n7ASzyvyX/uQUgYr+HxXAwbgu8df635L90AVTZXwvAFv9b8n8tgIUnwNL9XwsAjclJAAq+pwTQwPfkv7kCiE2jWd4PIF3AtUncCt+D/zEO3AJg2Q8HyDXt9ejaeOtN23+p5Heu7u8A634AwfXwPcztc/VrvZ+Bi8f6S/i/7gdgrIcvud32hsf+a+xn4OKx/lz/fQKkBoidW/J+AKqAveGx/xr7Gbh4rD/Xf5UCsL4fQDsBuHjsv8Z+Bi4e68/1X6UAQkes7gfQSgAuHvvPib+2/yVf1d51AfSQABb5S/pvkb+0/ut+AGP8Jf23yF9a/3U/gDH+kv5rc9H23ydA6dxtrIIk5n5rcVR8jn9ta8Vf2n9r/OfQ/2oeHAZJ3VpS8+g5fGrcGhwVn+M/t31tPPbfIn9p/a+egXcPZetJavGpcWudp+Bz/Oe2r41PFYAF/tL6rwWwFoAp/tL6d1EA8PzGcX4tgLUAavR3MBtQkkhRMAGfGhOWNtc4XoqP8e9hPwM3AWp/AVjkz7U/lcMOJ1KqXQGJeO0W8m69nyGVACV4jn2Mda7u/yNw+ePW2n7o//py9vYTcO1r88eth/g5596WxcL72Dl4779WmoCP9cFqTorNWnyKf8v9CBJz29L7KbTn5lvi4a5zUQAQQDhCgOC4Pe0v+s6vx7dv1s3gMQaO0Hd+PZJs1uBz/DX2I1Bv7dL2w+/HX/J+iIsEgCMkCCQUnMOBg/c5fIiBa/B5ik0qPsdfYz8CVUBp++H34y95MeDFhojHl4M/QoIMm8EnCgQN+sIEmsKHGLgeEjTEPO3eCkoCn+KvsR+BK6DkforFF8D2tB9/fPt+FVBIomEz+PfQN2yG8cO79z4Zc3j4GY8DZGIYfK0EPsUfJwRVAKv/HwDjF18AOADhb5an3cEPgPuGzRD9Q9IUHidtKFYMg/sk8Cn+FgWUxK8FEAkAJAt8gg77cuvpQ3ytE1L4FP8W9nvGpwrAAv8a/LofYOHr4XGzqJ+k/lfzwPjC0vXUEnO3tTgqPuTf85x1C7w1/aT1948w0Am3Dvxz7NZyK/sBNOz3hLeon6T+0Wf43cNylkNr2O8Jb1E/Sf3XAjAooCTeon6S+ndTAPD8xnFeswBa8pdMoF70axn/qwKA2ZCSgaJgAj41psZ+AAkBWvKXTsAe9OPw5+p/lcRL2w8QClAiQm9+Yu7UJOpBPyp/Ls+p/F3kKwx+SestkGEBU5o2d+f4+xk4r1+ThZDlfdtFmwAAAABJRU5ErkJggg==" class="pixelated_image">
             <p class="smol"><i>Tip: Right Click -&gt; Save Image As...</i></p>
             
             <div style="display:flex; flex-direction:row; margin-top: -8px; width: 384px;">
             <div style="flex: 1; width: 35%"><p>RPG Maker</p>
-            <img id="rpgmaker" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAwCAYAAABwrHhvAAACOklEQVRYhe2YMW6DQBBF5yapksYSDS5BVLlAjHwBXFFR+gKmI6kjVymTKyBFuUAOYSX32BTOXw3DwuyCpTiWkUaLd3dmHrDDfkP0e+wPW7NuC4NzVx/O0Urfp+2j+Xh5t7a6f7DG+9dtYZImN70AaDEBbdLknbH9YWuiMuuARWVmNqvC1NWuY0jO+5ImN1GZHS+IB0CLBIBAH3eU567kAJB9mJ80uSEeYN0WtkWCNE5tIjhhDFedNLkz+RAAYKMyM5Q0uXl7frUdCLhZFRYA5xhL49Tc3dyaqMw6AX0BOAgREX1/fvXINqvjFSMAH0vj1CwXsSEiGgruA1BXuy6AvEVYwXJsuYi9AHgVjALIktGMA4T4ucwCaLULq6tdB8DXb8jsI+C16qpdeWtdj0Dz814D2sIZAwhJfgWwAFjNQ6U3lJwDaH4qACCwwseM+ywXca+0tKSylGcf/A6EvkfsoekB1xh2yyEfXz0xqge4BkCLsf1hq2oITU+oekDu+5jD+8c0hKYnvPSA1ACYjwTSB9v3ui1UPeGlB/Cb6wKsaJcPn6vpCSLS9QBPKsWHy4ePaXqiAyCDhtT2UL1reoKIwvXAXHMCzDVfPVBXuz6A1ANTzVcPyP2ktwbmAPjOuwJcHoDvO8NZhjLA2bwHpmr9Mf+6CnwPTNH6mn/QGpi6D4z5XwH+D8Cp9ID0P289MLX2T6oHptb+yfTAnGfuO+/yAEKqpQdA5P99YCwg/qoHJ+cQPt8H5poz+V8dP3HKlNFMitgZAAAAAElFTkSuQmCC" class="pixelated_image"></div>
+            <img style="max-width: 95%;" id="rpgmaker" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAwCAYAAABwrHhvAAACOklEQVRYhe2YMW6DQBBF5yapksYSDS5BVLlAjHwBXFFR+gKmI6kjVymTKyBFuUAOYSX32BTOXw3DwuyCpTiWkUaLd3dmHrDDfkP0e+wPW7NuC4NzVx/O0Urfp+2j+Xh5t7a6f7DG+9dtYZImN70AaDEBbdLknbH9YWuiMuuARWVmNqvC1NWuY0jO+5ImN1GZHS+IB0CLBIBAH3eU567kAJB9mJ80uSEeYN0WtkWCNE5tIjhhDFedNLkz+RAAYKMyM5Q0uXl7frUdCLhZFRYA5xhL49Tc3dyaqMw6AX0BOAgREX1/fvXINqvjFSMAH0vj1CwXsSEiGgruA1BXuy6AvEVYwXJsuYi9AHgVjALIktGMA4T4ucwCaLULq6tdB8DXb8jsI+C16qpdeWtdj0Dz814D2sIZAwhJfgWwAFjNQ6U3lJwDaH4qACCwwseM+ywXca+0tKSylGcf/A6EvkfsoekB1xh2yyEfXz0xqge4BkCLsf1hq2oITU+oekDu+5jD+8c0hKYnvPSA1ACYjwTSB9v3ui1UPeGlB/Cb6wKsaJcPn6vpCSLS9QBPKsWHy4ePaXqiAyCDhtT2UL1reoKIwvXAXHMCzDVfPVBXuz6A1ANTzVcPyP2ktwbmAPjOuwJcHoDvO8NZhjLA2bwHpmr9Mf+6CnwPTNH6mn/QGpi6D4z5XwH+D8Cp9ID0P289MLX2T6oHptb+yfTAnGfuO+/yAEKqpQdA5P99YCwg/qoHJ+cQPt8H5poz+V8dP3HKlNFMitgZAAAAAElFTkSuQmCC" class="pixelated_image"></div>
             <div style="flex: 2; width: 65%"><p>GameMaker Studio 2 (47)</p>
             <img style="max-width: 95%; height:64px;" id="gms2" src="data:image/png;base64,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" class="pixelated_image"></div>
             </div>
@@ -1002,7 +1067,7 @@ div.option {
     vertical-align: middle;
     font-size: 16px;
     font-weight: 0;
-    height: 63px;
+    height: 56px;
     color: white;
     text-shadow: 0px 1px rgba(0, 0, 0, 0.65), 1px 1px rgba(0, 0, 0, 0.65);
 }
@@ -1084,6 +1149,19 @@ div.selected {
     background-size: contain;
     background-position: center;
     background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAAAwCAYAAACG5f33AAAACXBIWXMAAA7CAAAOwgEVKEqAAAAFSUlEQVRoQ+2aS2hcZRTHzySlRohJqSSL2EGMaVMU2kVKpaXQVdy4EPsQCwUXxY1YEVyYZcAHutAsKiIUF6niQkK7EKUQ0JaW6cah0DY0NlGJtolhYkvTkjaWMOZ/Mud6envvne9xZ5JM5gfT73X+3z333OF+J6dDwvGJvuKrw0eK0g/PRa3t+fRAoiZNve5LqwnbRs3F6WVtoO+z4pnBn4LP/t59wUfPwxa+Q5uRDYavFah3SxuhBZOXblPHtlbuA1lDOzg0zmvog7AGLXj9QFew5qqHrfT1Xsc+uUCXvjhb1v84X0Qv2tFT47Rzuos6s51sI+RH8nT08FuUu3ihNEP0Y/Yizf5WoK2vdFGj3mC2vYnbQy9307nvf6V/HzTSnel5upG7zmtwprBugcdYg02UBo7D5oU9WTr/85SXXuzDe8FuQ1db/wdDh/qT/I/zRfTi1/bRjkeCB6YKU7SwsFAaLTHW+jfb/7H+NjU+/lJ3v2wwv4Oo8+xGuvrMHF8AUW46fZce29vOgcR4ZvQmtTzbRltzrbTv/W76/Z+5RzQY32i+yY7eHfjTSz/Vd43mN2W4/9SpJrqzfemhwg7oAET5/2BwJlEP+5nsPO2k53gcBgHsaO8ojZZoHLnHwc7PXKYGXPzt5oM8gacHMIcb1GCMr7j0YV8YeCJWA1tZAz768F6Zb6fp/g+T3DfxP0kPnbY1ARqAfRvOvzuU2b1jdzCBRXk6GLdvbPv/aS2uiY0QpcFYbNPQa53YtTS38DvMxP8kPfqYdwG6hlKfkY3kYrdmb/F489iTwVr4YjJ+bf2L3NfraemBzMO3e/fnuB9G26Bvqw+DA0S3UfATwNF87JvPeWI1MDE5we0vI3kn/7UeKQoPHAkc4JEH+gZw7Ntiqs8tphMnh09yXweQJwwI60Xr6j87cD3/V3H8ythDuY4LUTmTDaZ62OFbJAG09V/rP3rnwyD4Lv4H70Df4Am++7jql8v/hw6ROvbUA+hJPYAl8P5zIbUAigOujpjqsS5piAthPU5kfc1y1wewgQ4fPsVwEpkIVwo6j0Nr63+aet4gLo+qVm4XR5Qep6RpHmiqB1KV+q73Ky5xvfH0x0GpS+akj3ogWuj4n6Q8Ck/GNjfSVEKPOXwLJAC2/of1EhyXeqJRHuh680I19K7+S/BQrZEWAULRQYIoBQiMxQ4luW1v7i2u+VMYwUBgUGQAaCVACBzqkQBzKHthHvYS1DUfQATDp5645gPoW09MDCBetrq1pVJ6SSPKYavXNUP0TeqJfAohDdBH/kpH52Fobf1PUx9swDMeROVcNpjqcaIm5YHl9klbzxvUWj2w3D5p6o3yQBt893HVh3W2+7jq1/wp7Es9gJ7URAA39WQzeC8BaeMIv/+Ajz54iZ74+gS6zugL9zzfU+qZY6qXGwA6CAD/RSlrSYR1goueO6u9HricsANxeWC1crs4ovQ4HV3qeVLD02vyM7s4TVy/5uqBcnNR9TxB1tCm+ftEozzQ9eaFSuoleHH1PHxkDX20soYgRGl0DVD39V41Uw+UwOCPfIBWbhA3jtKTruEhABijXHX0vV2RmpYveZrnar4eiJup9O8bdR/UVD2wGr9v1Dqxq8l6IG4QyM1W4/eJQRqjU4aVTjgPrLb/+vqBAzyziGvuVomcL4rc4onsU89LwsUHdsC2HhaHq04w1cNO54Fp+Q9sfYjNA10uDlx1QlrX9fHDRrvqT+HlJrUA4ivtg68+DVx84ADa1MOigAbvA3wqrRdbef8BX/+Bqw+BE8C0Hrbc6OBpqul/nA91rCD6D991cRjr30WRAAAAAElFTkSuQmCC");
+}
+.fivextwobg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAAAfCAYAAABwH0oUAAAACXBIWXMAAA7BAAAOwQG4kWvtAAAFG0lEQVRoQ+1ZTWhUVxQ+L7EaISYlkixGh9A0Gq1iLIkWRXCVbrootT9UKHRR3IgWwYUuA7bFrrqwiCAuotaFxLgoLYXQVqmMCx1Ea2hqYiVoMoaJSqJGo4TX+U7eeVxv7nvvvjcTw4gfTO6595zv/L2Zdy83Dnk4OrTf7b2Rp9MdxxzIOxoP8ihrn/V+5eq6ru5BSq2rDeQEyeLLC83QbcN86XzRdaysJ4zAyLVxzg0j8OUnzb4Odoe+v0jXDp9nH8Lf9Psaenf1erYBDp380ZOIdn+xy5OIDqd+Yr8X9nY7LzgwJSAQHUZpHGRA56hJw1ZksQsqwBRf9WXiC7f/7CCt+qiZx937NrG+5u169iFryGXiZp7t4Bcy1oW/cbSZmtJNHEOQ7cty8zJXLnorRL+mr/h+KtUEJhqqeNz+YQv99fO/9Ox5JT0cnaLhzB3WIWh+wTTPoYONiYOkYfPelrRvD/nCnznfF+zebK7v/KZ7e2dYfNWXiS95tfanaKqdqOl8Hf3z1iTrUeTzrjGaWu4wZ9nZKnrYOlMTdIDK15sH5PI5mp6e9mYzGKi9y/a3Fo5T5eIPWjrDEqj67REt2trgBx3rv89PdlWmlrYdaKH/7k3O4mA+XH2fk8vtv2FdQJIGwO7r6k/JfebSub5LtOxxHReG/JBD1bBLrW+soKu3B1k3lp4i59QojV/N0YKVSzge1jbSO+xPBxqYakh5sxlU9j3hZmfH/qYKJI8EsICnD2ANCajAHF9xkWGf/2FJIAe2olNlAAU8/WWEZZv4YXy8hza3b2ZZfoLSXMwb6up5TdfVVNfwKwBreq1RAAeAzwqbBGSuJiIwcTAX26gCim0ATzxAD4jtg4kHPAdU3ZOnkywLRBcX4FV4MiMogRUDS32dHkzmny98n2VVb1uAQLWBbMsfvD7AL3v5gIdRoOtsIT5UXzr4CZ7r+sNVt+y5xtDIEI+X+7KJ4pv4vFBA0NFDkCnspj29PSyD/3HHNp+bBLMSSIqoxAV6ARjjxDfx72Rvu/gWQgfgG6MfPVRAj4cAvsS2zV+HMYGkiEpcoBaAedz4Jv7xE8dZB0DftqbNm82Gyv9uz7f+w7PNX4X/Diy2eYKkfkoVv1jEzeOFTeQ14uOVaODytrSDnx8gYxDUn6+3VBRemW/gmd4ebiKagw82GtMnqHlRjQ+C8SWcBGoCNi9wIGgTCIPOd93iDhAb1ra7jalGbzaDsPwBNQcuADtR0ieQBHoD48YvZQMdxykqPhcQdA5LejYSmPjY5fBTAqSBceKr/EvXLxfqZxeR94lzdZ/Jf8LOYXgycc9GKkx8rOEpSgPjxhe+NFCKM90nCkSHsZT3mVbnwKTNE9jwk8aX5uG2RkYUiEsHNAIf0UHGKDo0wcRBE+XSQpVVX7jSW7dzq1v2u7A0BpcMAEYpEIXj6gsybDBHA+Q+E7fRJk7NEV7mNdxnigyO6gso+waimPm8zyz7Bs73fWZoA/GyVse4COLLMSAKcfkoEJBiX8Z9pn+MUI8Mcw31HIUxbnzhyy48n/n7BfBKAaazlw1seZnCjhp2Dozyo/LVBvJCAUnzB2y4s+JD0M9h+MnAgcxtYcuDHZ5i0Dkwyo/wpYGlyh+w4arxA8+BSYIDpeLF9VOq/IE43LLfhecbJWsgvtbljiQ1cAPjXEiaIO8EfKL4YivvP6DYC9Fi8wfEb1QNenw/CQD/4oNyrqEWr8I2vvBxlYVNRPCy83ddl/4Hvbw30ITZ1PcAAAAASUVORK5CYII=");
 }
 .fourxfourplusbg {
     display: flex;
