@@ -274,7 +274,7 @@ window.onload = () =>
             copyTile(img, ctx, [1, 3], [3, 2])
             copyTile(img, ctx, [3, 3], [4, 2])
         }
-        if(mode == "5x2")
+        let handle_5x2 = (img) =>
         {
             // convert 5x2 to 5x3
             let temp_canvas = document.createElement('canvas');
@@ -292,25 +292,25 @@ window.onload = () =>
             copyTile(img, ctx2, [2, 0], [1, 0])
             copyTile(img, ctx2, [2, 2], [1, 1])
             
-            copyTileQuadRaw(img, ctx2, [1, 0], [0, 0], [1, 0])
-            copyTileQuadRaw(img, ctx2, [1, 0], [1, 0], [0, 0])
+            copyTileQuadRaw(img, ctx2, [1, 0], [0, 0], [4, 1])
+            copyTileQuadRaw(img, ctx2, [1, 0], [1, 0], [3, 1])
             copyTileQuadRaw(img, ctx2, [1, 0], [0, 1], [1, 0])
             copyTileQuadRaw(img, ctx2, [1, 0], [1, 1], [0, 0])
-            
+
+            copyTileQuadRaw(img, ctx2, [1, 2], [0, 1], [4, 1])
+            copyTileQuadRaw(img, ctx2, [1, 2], [1, 1], [3, 1])
             copyTileQuadRaw(img, ctx2, [1, 2], [0, 0], [1, 1])
             copyTileQuadRaw(img, ctx2, [1, 2], [1, 0], [0, 1])
-            copyTileQuadRaw(img, ctx2, [1, 2], [0, 1], [1, 1])
-            copyTileQuadRaw(img, ctx2, [1, 2], [1, 1], [0, 1])
             
-            copyTileQuadRaw(img, ctx2, [0, 1], [1, 0], [0, 1])
+            copyTileQuadRaw(img, ctx2, [0, 1], [0, 1], [2, 0])
+            copyTileQuadRaw(img, ctx2, [0, 1], [0, 0], [2, 1])
             copyTileQuadRaw(img, ctx2, [0, 1], [1, 1], [0, 0])
-            copyTileQuadRaw(img, ctx2, [0, 1], [0, 0], [0, 1])
-            copyTileQuadRaw(img, ctx2, [0, 1], [0, 1], [0, 0])
-            
-            copyTileQuadRaw(img, ctx2, [2, 1], [1, 0], [1, 1])
-            copyTileQuadRaw(img, ctx2, [2, 1], [1, 1], [1, 0])
-            copyTileQuadRaw(img, ctx2, [2, 1], [0, 0], [1, 1])
+            copyTileQuadRaw(img, ctx2, [0, 1], [1, 0], [0, 1])
+
+            copyTileQuadRaw(img, ctx2, [2, 1], [1, 1], [2, 0])
+            copyTileQuadRaw(img, ctx2, [2, 1], [1, 0], [2, 1])
             copyTileQuadRaw(img, ctx2, [2, 1], [0, 1], [1, 0])
+            copyTileQuadRaw(img, ctx2, [2, 1], [0, 0], [1, 1])
             
             copyTileQuadRaw(img, ctx2, [1, 1], [1, 1], [0, 1-1])
             copyTileQuadRaw(img, ctx2, [1, 1], [0, 1], [1, 1-1])
@@ -328,6 +328,48 @@ window.onload = () =>
 
             copyTile(temp_canvas, ctx, [1, 3], [3, 2])
             copyTile(temp_canvas, ctx, [3, 3], [4, 2])
+        };
+        if(mode == "5x2")
+        {
+            handle_5x2(img);
+        }
+        if(mode == "4x2")
+        {
+            // convert 4x2 to 5x2
+            let temp_canvas = document.createElement('canvas');
+            temp_canvas.width = tileWidth*5;
+            temp_canvas.height = tileHeight*2;
+            let ctx2 = temp_canvas.getContext("2d");
+            
+            copyTile(img, ctx2, [0, 0], [0, 0])
+            copyTile(img, ctx2, [0, 1], [0, 1])
+            copyTile(img, ctx2, [1, 0], [1, 0])
+            copyTile(img, ctx2, [1, 1], [1, 1])
+            
+            copyTile(img, ctx2, [4, 0], [3, 0])
+            copyTile(img, ctx2, [3, 0], [2, 0])
+            
+            copyTileQuadRaw(img, ctx2, [2, 0], [0, 0], [2, 0])
+            copyTileQuadRaw(img, ctx2, [2, 0], [1, 0], [2, 0])
+            copyTileQuadRaw(img, ctx2, [2, 0], [0, 1], [2, 1])
+            copyTileQuadRaw(img, ctx2, [2, 0], [1, 1], [2, 1])
+            
+            copyTileQuadRaw(img, ctx2, [2, 1], [0, 0], [2, 1])
+            copyTileQuadRaw(img, ctx2, [2, 1], [1, 0], [2, 1])
+            copyTileQuadRaw(img, ctx2, [2, 1], [0, 1], [2, 0])
+            copyTileQuadRaw(img, ctx2, [2, 1], [1, 1], [2, 0])
+            
+            copyTileQuadRaw(img, ctx2, [3, 1], [0, 0], [2, 0])
+            copyTileQuadRaw(img, ctx2, [3, 1], [0, 1], [2, 0])
+            copyTileQuadRaw(img, ctx2, [3, 1], [1, 0], [3, 1])
+            copyTileQuadRaw(img, ctx2, [3, 1], [1, 1], [3, 1])
+            
+            copyTileQuadRaw(img, ctx2, [4, 1], [0, 0], [3, 1])
+            copyTileQuadRaw(img, ctx2, [4, 1], [0, 1], [3, 1])
+            copyTileQuadRaw(img, ctx2, [4, 1], [1, 0], [2, 0])
+            copyTileQuadRaw(img, ctx2, [4, 1], [1, 1], [2, 0])
+            
+            handle_5x2(temp_canvas);
         }
         if(mode == "rpgmaker")
         {
@@ -588,6 +630,7 @@ window.onload = () =>
     let option_3x3plus = document.getElementById("option_3x3plus");
     let option_5x3 = document.getElementById("option_5x3");
     let option_5x2 = document.getElementById("option_5x2");
+    let option_4x2 = document.getElementById("option_4x2");
     let option_rpgmaker = document.getElementById("option_rpgmaker");
     function reset_selected()
     {
@@ -599,6 +642,7 @@ window.onload = () =>
         option_3x3plus.classList.remove("selected");
         option_5x3.classList.remove("selected");
         option_5x2.classList.remove("selected");
+        option_4x2.classList.remove("selected");
         option_rpgmaker.classList.remove("selected");
     };
     option_basic.onclick = () =>
@@ -655,6 +699,13 @@ window.onload = () =>
         mode = "5x2";
         reset_selected();
         option_5x2.classList.add("selected");
+        updatePreviews(img);
+    };
+    option_4x2.onclick = () =>
+    {
+        mode = "4x2";
+        reset_selected();
+        option_4x2.classList.add("selected");
         updatePreviews(img);
     };
     option_rpgmaker.onclick = () =>
@@ -833,6 +884,7 @@ window.onload = () =>
             <div id="option_3x3plus" class="option affect"><span class="threexthreeplusbg">3x3plus</span></div>
             <div id="option_5x3" class="option affect"><span class="fivexthreebg">5x3</span></div>
             <div id="option_5x2" class="option affect"><span class="fivextwobg">5x2</span></div>
+            <div id="option_4x2" class="option affect"><span class="fourxtwobg">4x2</span></div>
             <div id="option_rpgmaker" class="option affect"><span class="rpgmakerbg">RPG Maker</span></div>
             <!-- <div id="option_godot" class="option affect"><span class="godot">Godot</span></div> -->
         </div>
@@ -1072,7 +1124,7 @@ div.option {
     vertical-align: middle;
     font-size: 16px;
     font-weight: 0;
-    height: 56px;
+    height: 48px;
     color: white;
     text-shadow: 0px 1px rgba(0, 0, 0, 0.65), 1px 1px rgba(0, 0, 0, 0.65);
 }
@@ -1166,7 +1218,20 @@ div.selected {
     background-repeat: no-repeat;
     background-size: contain;
     background-position: center;
-    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAAAfCAYAAABwH0oUAAAACXBIWXMAAA7AAAAOwAFq1okJAAAEW0lEQVRoQ+1YTUhUURQ+o1AGNoKhi8lBMktJ0MWIkASubNMqs2gRtIg2kRG0yGUQRS3KhRFBtNCiRYiuikCIhBgXOQimJGqBVIrMpKShTi5e8x3nPG7P9+b9zB8TfvC85557vnvOPW9893BI8HS+Wzs3fEkT2agzWzvxoDMlx0qWUYXR1kyXLb6s9XQ/1N73vdOfM+0d+qPqYYuzg+uTDYZnotR+tIIwAgsTvyjQWMYyIGsY+wbmeA0yYORgBC521rKtyGIHXu/9UZp4PGLrX90rG3zhTg/NUctSLdUEa9hGEJmKUNeFqxQeH01qiN4Ex2n1S5TqT9dSkbqBjHAAAzjHI2uQMcoagjDjIHDIgCqre/kPV1DjlTbNzn+2+ZChN0ueQE2eAPbgFe87VXcLQtN0gOLNRDUj5fT50Dr92SpmxyVvf9PetkpaW4rzPDa9zM7rw2XUcbuOvv5c38HB/EfpMq1WltBi9wzFq3wsHxwqobWmYn0vAPpU/rf6Ylnlwz4WjFMLHeO5EYvRRQpUBpKzbRRPbXCyI7FPVATn10rPsgJvB4AOCVKBObIuMuyjPfstObCVNVUGfC+XaPP1AstO/GeTD55q6wTgANi36MONAV9rc6uuwKK8Hcwry7f/HQCsiY3AjIO52IKv8sTOX+rnb5AT/9nkQ4beC8ArSsoM2Uicrayu8PzI7AF9zehM5uf3nGRZXRc+IHrsvbG5zrIRqg3kXPONwAWijmbgN4CruffFI1bkAvML8zyOTUU8+c8kHyUKTzxCD4BnaUA9AK59K4QTN9rg8CDLagJY4QB2fLs4jHzhOo3fCA7ge+SbNjc5a3pdu4FZzWQG2OFXIAlw69+ObxeHyr97/Y6efKfxq9C/gW5IqeB1n3T9G/m5iuOfS2QX7rGbwDTxXySwKhT04fsFyGgF9fuXVDHseFbQP8L9z/tZ4RVqAKGGUFLaCTkAoF4CTv2b8QUoSWQtFVRec0NIqw5UJ2fbSBU/oMbAG+Em8voGvMCYALf+rRLoFen45wCs6jCvtZHAjI9bzmkdaMf/ODnmS4Bl6cq8an/GLarL1ff0VhV06OEZ16QtZ8WxkmUv+OU/qeowvBm3tZEKMz50eIuSQLf+hS8JlMOhjYURQEMByRHIGsZM9jMd1YFekydwwvfqX5KHbouMOCCaBkgEHlmDjFHWMtHPLPhbWBKDJgGAUQ6Ig6N1BRk2mCMB0s/sunnclON/wmrWoZ8pMjjqXkDBJxCHyWc/s+ATmO9+ZsoE4mOtjm5hxZcywA5u+TggIIfNRT9TLyPUkiHbUOsojG79C19u4XzGrx+ANQmY1V5O4JQXTtyomernqQlkRQK5jJ/9Q3DbT7OCUx7s8Bat6kC7fYQvCcxX/PBvWQe6dS7IFM/tPvmKv+Bv4XwjYwnEz7qQ4TV+TqCbfpoZ5JuAx44vtvL9A9Lt5+Uzfj0IwGk/LV2oh1fhtp+naRrhEhHkOn5N0+gvJoQZ/EeN7OYAAAAASUVORK5CYII=");
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAAAgCAYAAACFM/9sAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsEAAA7BAbiRa+0AAARYSURBVGhD7ZhNSBVRFMfPUygDUzB08VIks5QEXShCEriyTavMokXQItpERtAil0EUtSgXRgTRQosWIboqAiESQjc9BEsStUAqRTQlDT9y8fJ/fGc4TTNv7sy8p7zwB+M99+N/z71nnnMvh4THk23xM30X4mLb25z6jt1rSapxs6XU2Mc6taVLL33tbffjbzvfWM+ppmbr0e0Yi71DG5EJ+sZmqelwIaEEU8M/KVqdzzaQPpSd3RPcBxvYNSjB+ZZyHiu2jIOu4+4gDT/s9/Sv50qHXrSjvRNUP1NOZSVlPEaIjcSo9dxlGhgaTLQQvSoZosXPs1R5spyy9ARSwgEGwDke6YONUvqwCCcNFg4baFvPlXewkKovNca9/KdbDxvtTsETdPAEjIcue8+JihswakajtFZHVNZfQJ8OLNPv9Wx2nPP6F+1uLKKlmTWuz43Os/PKgXxqvllBX34s/6NB/XvuPC0W5dB02xitFUfY3t+bQ0s12dZcAO3J/K93zqVVj/FzJWtUT0e4bmd6dpqiRdFEbZPskRUOdmzuA2XB+ZXc09yAtwPQhgBpUEfUxcb42fa9rhqMlT5tg8jzGVp9OcW2if906qHTY02ABmDerHfXuiMNdQ1WAzrl7aBeVLD57wDQJ2MEJw3qMhZ6rZNxebl5/A0y8Z9OPWy0BwG6rITNyETibGFxgeuHxvdZfXZnUj+76zjbul/0QNox98rqMtt29BjYW623gwNEl07wG8DR3PHsATdsBZNTk1y+H4kF8p9KPa4oXAmItQCuhUBvAMe+GwMbJ1pPXw/bOgDcYICX3msddr1oTddvhxfwLfY1PvFx3PG49oPTnckJjMOvQALg17+X3msdWn/76i0r+Kbr11jfQD+iZASdJ6x/u36r1vHXIbKDf3YCGJL/IoDFtSURfL+AlG7o71+iifHSuWF9hLuednFDUPQCaqtqE9a/yAaAPgRM/TvpBVxJpC8ZWldXVRsvjZYmapskWz/Qa+CJcBIFfQNBsAfAr3+3AAYljH9egNs9LOjdSHDS45QzvQea6oFkZV40PeEU1cXSO1aqCm3I4dn7JC3npnGzZS745T/J7mF4M37vRhonPdrwFiUAfv3b9bI5pLFQAiQUEBxB+lCmMp9pdA8MGjzBRB/UvwQP2RYpsUEkDRAIPNIHG6X0pSKfmfGnsAQGSQKAUjaIjSN1BRtjUEcAJJ/Zev2ooybvETdzG/KZYkOj5wIZH0BsZjvzmRkfwO3OZyYNID7WuvSLm16uAV741WODQDa7FflMPsVwjdBXhnSj71Eo/foPqw+L9m8tgFs2cLp7mWCqG9g4UVOZz0OZivUDE63dPy/Abz7NDVMdxuEtSgD8+g+rT4aJVvt3vQcGcQ5SpfM7T6rWD/xoM/4U3m5SFkD8rDOdIHvgAPrJpzkh3wQ8XnoZK98vEDafF3b9QOb12oPdv7UIYJpPC4vevCZIPk+z3evfwTdEfwB6AhQFHJ5jGAAAAABJRU5ErkJggg==");
+}
+.fourxtwobg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAYAAACinX6EAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsAAAA7AAWrWiQkAAARjSURBVGhD7ZhLSJRRFMfPaJSBaRS6mBoks4yCWihFEbSyTYvoSUHQItpVBC1yKfSgFtWiiCBaWNEipBZRBEIPimnTIFiSpRVSaTKWZGFZyOT/zJyv4+f9XnemoscPhnvuved/H2e+797vXhLO9jRmNrfuyIjtLjPVrTy20VfjZUuqcfuayrz0Unei8XjmTvMt57ehYb3z0+XwxdihjUkDrc/S1DC/gpCC3vYPFF9czjaQOqTNLd1cBxu4NUjB9o017Cu2+EF38ugDaj99N7B/3ZZJL9rOq920tL+GqhPV7COkOlK0e9suSrY9yJUQ3Ui00dDzNC1YV0PFuoGhyhJOt66tpXvXntLXb8X0sX+E3iRfcx0Gk540ynnUwcekwcDhs2xlwvGHff92n9MW/KbXVDQdbNna5Ne/bsukl3Et6YxPmDzoS/fR6OhoLpelq/wt+7+c/IGKp66pbZIGRuqJqu/OoCdzhrkDRKnk5ieasqqSA4H8QOd7KptbQQuS5bT+QC29eDc8QYP8m9L3PNC+xmc0MjvG9qyrJfRxSTao8AN6Aqb+vzUP+OrhP5AYoaW0kPNuEIB4ZTyXy1Lc8ZmDlRp4REXofE/pJi5A9AHKMEEN8njExIZ/+sQ0Tw18pU7bIHapn75c72U7TP9+eujcYw0CGoB2i+7va4mtqF/hFKBSoot85YyKH9EeqxMfwaRBXnyh1zrxKyst43c4TP9+etgotwG6opzNSEPS2eDQIOfndc106tydSX7L5NVs63rRAylH25+/DLPtRvvAjqp3gwVQpyY4gtgaTl48xQW/gp7eHk4fdqSs+td6bHGcscQZAOfyQE8A244XybHt6ErrFbZ1ALhgjKB23HrRhu3fDQ/gdepVpvtx17i90gbTnmsCfvgXJQDu/oPa0frDew85wQvbv8ZZA/KdvGDbjltXqHaCGLcI/ov8D0Au/a3MrkvE8P4CSb3Q73+uiAnSeeEsQucvnOcCW/QA6hbV5ayJyASAexLY0qTOD62rX1SXqYpX5XJZ/PoHegzcEFZS2wja4BUAW6KOX/fPA/D6DrDdWwWTHqu033eAJoweZ/vLDef4WLyz6ohzPJYysU1+OKrzAPy+AxDZqHurxqSXR1ACELV/rZdJAhyi/O4QYCPV9xmhvgNsJy+E0dv2j0nhpIjJ4KAkQZBDE/Kohx9spOKHS5W/YhvEAQkTwz0FJld2JluOMhydUY4Jow7BkPuM3fuX//kBCHuHgDqUiY3TJe4z/vgAyNFZHnnJ4wc76D7DNwBYbHQaFS+9bENBhNHLZPzuI/zuM5xtSG85Pxu9DyON2r/WF/w+wHbvD6tLjq3oYb8DTLj1+Y7duA/jkXPvvWEIq4Of7OPI+30HmNB6fR8Aoo7d8zsg6uSFX60zEaWtv+I7IB8KFgA8er8bmzFwAKKcx01Ag3cSvyC9+Mr7XyiijEEzbhBhz+P54p58lPsImShAO7gP4IwlBf0XbMnnPM+GNUTfAf7IbzodLTFdAAAAAElFTkSuQmCC");
 }
 .fourxfourplusbg {
     display: flex;
