@@ -8,10 +8,22 @@
     <link rel="preconnect" href="https://fonts.gstatic.com/">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100&display=swap" rel="stylesheet"> 
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap" rel="stylesheet"> 
+    <link rel="canonical" href="https://wareya.github.io/webtyler/">
 <script>
 'use strict';
 window.onload = () =>
 {
+    // mildly-privacy-respecting analytics if running from github.io
+    // because github.io is dumb and doesn't have *any* access analytics *at all*
+    // if this bothers you, get an ad blocker
+    if((window.location + "").startsWith("https://wareya.github.io/webtyler/"))
+    {
+        let script = document.createElement("script");
+        script.dataset.goatcounter = "https://wareya.goatcounter.com/count";
+        script.setAttribute("src", "https://gc.zgo.at/count.js");
+        script.setAttribute("async", "");
+        document.body.appendChild(script);
+    }
     // https://stackoverflow.com/questions/9267899/arraybuffer-to-base64-encoded-string
     function _arrayToBase64(buffer) {
         let binary = '';
