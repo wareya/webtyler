@@ -295,7 +295,7 @@ window.onload = () =>
             let h = Math.floor(tileHeight/2);
             // sides
             {
-                let o = 0;//Math.floor(topOffset/2 + bottomOffset/2);
+                let o = Math.floor(topOffset/2 + bottomOffset/2);
                 let a = 0;
                 let b = Math.floor(tileHeight/4 + o);
                 let c = Math.floor(tileHeight*3/4 + o);
@@ -314,7 +314,7 @@ window.onload = () =>
             }
             // top/bottom
             {
-                let o = 0;//Math.floor(leftOffset/2 + rightOffset/2);
+                let o = Math.floor(leftOffset/2 + rightOffset/2);
                 let a = 0;
                 let b = Math.floor(tileWidth/4 + o);
                 let c = Math.floor(tileWidth*3/4 + o);
