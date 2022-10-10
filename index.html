@@ -133,6 +133,26 @@ window.onload = () =>
             size_x, size_y
         );
     }
+    function copyTilePixels(img, ctx, target, source, from, to, size)
+    {
+        let x = target[0] * tileWidth + to[0];
+        let y = target[1] * tileHeight + to[1];
+
+        let source_x = source[0] * tileWidth + from[0];
+        let source_y = source[1] * tileHeight + from[1];
+        
+        ctx.clearRect(
+            x, y,
+            size[0], size[1],
+        );
+        ctx.drawImage(
+            img,
+            source_x, source_y,
+            size[0], size[1],
+            x, y,
+            size[0], size[1],
+        );
+    }
 
     function copyTileQuadRaw(img, ctx, target, section, data)
     {
@@ -256,6 +276,65 @@ window.onload = () =>
             copyTile(img, ctx2, [2, 0], [1, 0])
             copyTile(img, ctx2, [3, 0], [1, 0])
             copyTile(img, ctx2, [4, 0], [1, 0])
+            // convert minitiles to godot
+            updateMinitiles(temp_canvas, ctx);
+        }
+        if(mode == "basicborder" || mode == "basicfullborder")
+        {
+            // convert basic to minitiles
+            let temp_canvas = document.createElement('canvas');
+            temp_canvas.width = tileWidth*5;
+            temp_canvas.height = tileHeight;
+            let ctx2 = temp_canvas.getContext("2d");
+            copyTile(img, ctx2, [0, 0], [0, 0])
+            copyTile(img, ctx2, [1, 0], [1, 0])
+            copyTile(img, ctx2, [2, 0], [1, 0])
+            copyTile(img, ctx2, [3, 0], [1, 0])
+            copyTile(img, ctx2, [4, 0], [1, 0])
+            // copy borders over
+            let h = Math.floor(tileHeight/2);
+            // sides
+            {
+                let o = 0;//Math.floor(topOffset/2 + bottomOffset/2);
+                let a = 0;
+                let b = Math.floor(tileHeight/4 + o);
+                let c = Math.floor(tileHeight*3/4 + o);
+                let d = tileHeight;
+                // left border
+                let w1 = Math.floor(tileWidth/2 + leftOffset);
+                copyTilePixels(img, ctx2, [1, 0], [0, 0], [0, b    ], [0, b], [w1, c-b]);
+                copyTilePixels(img, ctx2, [1, 0], [0, 0], [0, b    ], [0, c], [w1, d-c]);
+                copyTilePixels(img, ctx2, [1, 0], [0, 0], [0, b+d-c], [0, 0], [w1, b  ]);
+                // right border
+                let w2 = Math.floor(tileWidth/2 - rightOffset);
+                let z = tileWidth-w2;
+                copyTilePixels(img, ctx2, [1, 0], [0, 0], [z, b    ], [z, b], [w2, c-b]);
+                copyTilePixels(img, ctx2, [1, 0], [0, 0], [z, b    ], [z, c], [w2, d-c]);
+                copyTilePixels(img, ctx2, [1, 0], [0, 0], [z, b+d-c], [z, 0], [w2, b  ]);
+            }
+            // top/bottom
+            {
+                let o = 0;//Math.floor(leftOffset/2 + rightOffset/2);
+                let a = 0;
+                let b = Math.floor(tileWidth/4 + o);
+                let c = Math.floor(tileWidth*3/4 + o);
+                let d = tileWidth;
+                // left border
+                let h1 = Math.floor(tileHeight/2 + topOffset);
+                copyTilePixels(img, ctx2, [2, 0], [0, 0], [b    , 0], [b, 0], [c-b, h1]);
+                copyTilePixels(img, ctx2, [2, 0], [0, 0], [b    , 0], [c, 0], [d-c, h1]);
+                copyTilePixels(img, ctx2, [2, 0], [0, 0], [b+d-c, 0], [0, 0], [b  , h1]);
+                // right border
+                let h2 = Math.floor(tileHeight/2 - bottomOffset);
+                let z = tileWidth-h2;
+                copyTilePixels(img, ctx2, [2, 0], [0, 0], [b    , z], [b, z], [c-b, h2]);
+                copyTilePixels(img, ctx2, [2, 0], [0, 0], [b    , z], [c, z], [d-c, h2]);
+                copyTilePixels(img, ctx2, [2, 0], [0, 0], [b+d-c, z], [0, z], [b  , h2]);
+            }
+            if(mode == "basicfullborder")
+            {
+                copyTile(img, ctx2, [3, 0], [2, 0])
+            }
             // convert minitiles to godot
             updateMinitiles(temp_canvas, ctx);
         }
@@ -635,6 +714,8 @@ window.onload = () =>
     };
     
     let option_basic = document.getElementById("option_basic");
+    let option_basicborder = document.getElementById("option_basicborder");
+    let option_basicfullborder = document.getElementById("option_basicfullborder");
     let option_minitiles = document.getElementById("option_minitiles");
     let option_4x4 = document.getElementById("option_4x4");
     let option_3x3 = document.getElementById("option_3x3");
@@ -647,6 +728,8 @@ window.onload = () =>
     function reset_selected()
     {
         option_basic.classList.remove("selected");
+        option_basicborder.classList.remove("selected");
+        option_basicfullborder.classList.remove("selected");
         option_minitiles.classList.remove("selected");
         option_4x4.classList.remove("selected");
         option_3x3.classList.remove("selected");
@@ -662,6 +745,20 @@ window.onload = () =>
         mode = "basic";
         reset_selected();
         option_basic.classList.add("selected");
+        updatePreviews(img);
+    };
+    option_basicborder.onclick = () =>
+    {
+        mode = "basicborder";
+        reset_selected();
+        option_basicborder.classList.add("selected");
+        updatePreviews(img);
+    };
+    option_basicfullborder.onclick = () =>
+    {
+        mode = "basicfullborder";
+        reset_selected();
+        option_basicfullborder.classList.add("selected");
         updatePreviews(img);
     };
     option_minitiles.onclick = () =>
@@ -889,6 +986,8 @@ window.onload = () =>
         <div id="options" style="width: 200px; min-height: 10px;" class="affect">
             <p style="margin-top: 5px;">Modes</p>
             <div id="option_basic" class="option affect"><span class="basicbg">Basic</span></div>
+            <div id="option_basicborder" class="option affect"><span class="basicborderbg">Basic Border</span></div>
+            <div id="option_basicfullborder" class="option affect"><span class="basicfullborderbg">Basic Full Border</span></div>
             <div id="option_minitiles" class="option affect selected"><span class="minitilesbg">Minitiles</span></div>
             <div id="option_4x4" class="option affect"><span class="fourxfourbg">4x4</span></div>
             <div id="option_4x4plus" class="option affect"><span class="fourxfourplusbg">4x4plus</span></div>
@@ -1089,7 +1188,7 @@ div.option {
     flex-direction: row;
     align-items: flex-start;
     width: 938px;
-    height: 700px;
+    height: 812px;
     margin: auto;
     border: 1px solid rgba(0,0,0,0.);
     border-radius: 6px;
@@ -1179,6 +1278,32 @@ div.selected {
     background-size: contain;
     background-position: center;
     background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAQCAYAAAB3AH1ZAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHASURBVEhLzZS9SwJxGMd/d0OTmEQ69LLY2xAUaQS5W0SbSTSU/QM5uFV/QNEkVH9CRJNODuFuREkURlA6SGBkgeVQ0nLd9+Ge45Q7T7mhPsvz8rvf83xPn+ek/cSeAL7Eh5J9fBfTmVEJfjXpIWvMsX+7XFRgcS80M69QAROOTo41T4j4+pbmNUMCuHh4vF/AgspdXQxMucmCzahfP8NzhweXYq1nESIsBYD8fZ6a524utEwzMjd/SJeoASwafJbedBHwAWJ+rnfEK85+zts2Z6yaAxnFUHjudYwSsNyARGwXKY/cRM5DeTzPopwio1jctSr8w356O4AcmjEQxWfEaVU0Mi9a4Ax56TkghWZDFKARhPDbIfb1eSnXeuZ2uXkGHCFrlkADwM1q9RrFwHj23fgi3w4MoNGaQVuAVTKujB3lSplsJByR1OIdDaIVugAttt1dTHQqmyIfAvhuJztvBgmIbcSUYuFJXxe73cU5fgUIUENdvN09M/QZaL3UTREj3d5rGsK/4H8IGAwMYZopwdYK/v+vCteOvwGAhnAnuUtBdGFF4RVrBzfHXRUaQqPw4GRQ8+whAU5QGzv4DgjxC2e6BUnBLVfLAAAAAElFTkSuQmCC");
+}
+.basicborderbg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAQCAIAAAD4YuoOAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAADSSURBVDhPY3Srj2cgBcT6f4ayiANMUJoa4MSdL1AWEmBWdjCAMhkYVLWfC4t98bZi+M7y7t1rXogIkKuv8QsuAmTICLGBlaMDrOKIIAKaZaHCA2FjBYs3Qq3ErwwNQIOIeG1oyrAGCzKAWkCSo5ABQY3ERjJBl2ICiBaoBWToJxJALbh9VRLCoCKAhB6xQUS2C4i1gGwAtQCYTCEMXICgAlyxSKwPCCZHXAoQkYzsBCAbmG+BCMiAiGM6EFMEKyC/NAVagMdbcFnyIxl/oEFlGRgAqdZQWlzH2iAAAAAASUVORK5CYII=");
+}
+.basicfullborderbg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAQCAIAAADfzGvmAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAEXSURBVEhLY3Srj2cgBcT6f4ayiAOLN/ICSVXt5xYqPBARrODEnS+3r0oCGUwQPlUA0FAoCxXgcg2yeqACiFeZlR0MIEJAANQpLPbF24rhO8u7d6+hPgNy9TV+wUWADBkhNrBydIBVHKgeV9hgqgcqRoQQxB8QzRD3AhHcLFyGUhcAbYE6iGAcwwGaMlzRBAekqoc6iOwAIFUjQfXEJmqCPsMEpGqBqIc6iAz7aASgDoKUAdQF5MUmsVFGCxdjBcQ6iG4A6iBgtocwcAGCCshLwpiA2BAimCColf8RiRrZyUA2sFIEIiADIo7pIUwR/IAY9UA15Nf2QM14QgUui8nACoCylNb2eEwHArgs0BpICwS/eihgYAAAJweAFZ6su4IAAAAASUVORK5CYII=");
 }
 .fourxfourbg {
     display: flex;
