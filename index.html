@@ -338,6 +338,21 @@ window.onload = () =>
             // convert minitiles to godot
             updateMinitiles(temp_canvas, ctx);
         }
+        if(mode == "basiclongborder")
+        {
+            // convert basic to minitiles
+            let temp_canvas = document.createElement('canvas');
+            temp_canvas.width = tileWidth*5;
+            temp_canvas.height = tileHeight;
+            let ctx2 = temp_canvas.getContext("2d");
+            copyTile(img, ctx2, [0, 0], [0, 0])
+            copyTile(img, ctx2, [1, 0], [0, 0])
+            copyTile(img, ctx2, [2, 0], [0, 0])
+            copyTile(img, ctx2, [3, 0], [0, 0])
+            copyTile(img, ctx2, [4, 0], [1, 0])
+            // convert minitiles to godot
+            updateMinitiles(temp_canvas, ctx);
+        }
         if(mode == "4x4")
             update4x4(img, ctx);
         if(mode == "3x3")
@@ -716,6 +731,7 @@ window.onload = () =>
     let option_basic = document.getElementById("option_basic");
     let option_basicborder = document.getElementById("option_basicborder");
     let option_basicfullborder = document.getElementById("option_basicfullborder");
+    let option_basiclongborder = document.getElementById("option_basiclongborder");
     let option_minitiles = document.getElementById("option_minitiles");
     let option_4x4 = document.getElementById("option_4x4");
     let option_3x3 = document.getElementById("option_3x3");
@@ -730,6 +746,7 @@ window.onload = () =>
         option_basic.classList.remove("selected");
         option_basicborder.classList.remove("selected");
         option_basicfullborder.classList.remove("selected");
+        option_basiclongborder.classList.remove("selected");
         option_minitiles.classList.remove("selected");
         option_4x4.classList.remove("selected");
         option_3x3.classList.remove("selected");
@@ -759,6 +776,13 @@ window.onload = () =>
         mode = "basicfullborder";
         reset_selected();
         option_basicfullborder.classList.add("selected");
+        updatePreviews(img);
+    };
+    option_basiclongborder.onclick = () =>
+    {
+        mode = "basiclongborder";
+        reset_selected();
+        option_basiclongborder.classList.add("selected");
         updatePreviews(img);
     };
     option_minitiles.onclick = () =>
@@ -983,11 +1007,13 @@ window.onload = () =>
 <body>
     <a href="https://github.com/wareya/webtyler/" target=_blank style="float: right; position: absolute; text-shadow: none; font-family: Roboto; font-weight: 300; right: 25px;">Github</a>
     <div id="app" class="affect">
-        <div id="options" style="width: 200px; min-height: 10px;" class="affect">
+        <div id="options" style="min-height: 10px;" class="affect">
             <p style="margin-top: 5px;">Modes</p>
+            <div class="modes">
             <div id="option_basic" class="option affect"><span class="basicbg">Basic</span></div>
             <div id="option_basicborder" class="option affect"><span class="basicborderbg">Basic Border</span></div>
             <div id="option_basicfullborder" class="option affect"><span class="basicfullborderbg">Basic Full Border</span></div>
+            <div id="option_basiclongborder" class="option affect"><span class="basiclongborderbg">Basic Long Border</span></div>
             <div id="option_minitiles" class="option affect selected"><span class="minitilesbg">Minitiles</span></div>
             <div id="option_4x4" class="option affect"><span class="fourxfourbg">4x4</span></div>
             <div id="option_4x4plus" class="option affect"><span class="fourxfourplusbg">4x4plus</span></div>
@@ -997,6 +1023,7 @@ window.onload = () =>
             <div id="option_5x2" class="option affect"><span class="fivextwobg">5x2</span></div>
             <div id="option_4x2" class="option affect"><span class="fourxtwobg">4x2</span></div>
             <div id="option_rpgmaker" class="option affect"><span class="rpgmakerbg">RPG Maker</span></div>
+            </div>
             <!-- <div id="option_godot" class="option affect"><span class="godot">Godot</span></div> -->
         </div>
         <div style="margin: 5px;">
@@ -1187,8 +1214,8 @@ div.option {
     display: flex;
     flex-direction: row;
     align-items: flex-start;
-    width: 938px;
-    height: 812px;
+    width: 975px;
+    height: 680px;
     margin: auto;
     border: 1px solid rgba(0,0,0,0.);
     border-radius: 6px;
@@ -1229,13 +1256,20 @@ div.option {
     image-rendering: pixelated;
     image-rendering: crisp-edges;
 }
+.modes {
+    flex-wrap: wrap;
+    display: flex;
+    flex-direction: row;
+}
 .option {
+    width: 96px;
+    height: 64px;
+    box-sizing: content-box;
     user-select: none;
     text-align: center;
     vertical-align: middle;
     font-size: 16px;
     font-weight: 0;
-    height: 48px;
     color: white;
     text-shadow: 0px 1px rgba(0, 0, 0, 0.65), 1px 1px rgba(0, 0, 0, 0.65);
 }
@@ -1304,6 +1338,19 @@ div.selected {
     background-size: contain;
     background-position: center;
     background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAQCAIAAADfzGvmAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAEXSURBVEhLY3Srj2cgBcT6f4ayiAOLN/ICSVXt5xYqPBARrODEnS+3r0oCGUwQPlUA0FAoCxXgcg2yeqACiFeZlR0MIEJAANQpLPbF24rhO8u7d6+hPgNy9TV+wUWADBkhNrBydIBVHKgeV9hgqgcqRoQQxB8QzRD3AhHcLFyGUhcAbYE6iGAcwwGaMlzRBAekqoc6iOwAIFUjQfXEJmqCPsMEpGqBqIc6iAz7aASgDoKUAdQF5MUmsVFGCxdjBcQ6iG4A6iBgtocwcAGCCshLwpiA2BAimCColf8RiRrZyUA2sFIEIiADIo7pIUwR/IAY9UA15Nf2QM14QgUui8nACoCylNb2eEwHArgs0BpICwS/eihgYAAAJweAFZ6su4IAAAAASUVORK5CYII=");
+}
+.basiclongborderbg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAQCAIAAAD4YuoOAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAG0SURBVDhPjZS/L0NhFIYvEYupMVm7M0ikQ3e6WUhqM/gX2BiY8C8YbB1YbNgNjcTA3tUknSwG9dz7XKdf76W8keP8eM97vvP1a2dGo1GW4O75HLuxsr9zttM76BHiWxJkLm+f9AePg+PDLcPdzmqab6419Wf9J6LZMYZMKool6upIq461hDpVOeMBre1WkHTUkpqOMQOm8GNGfkU0E5CqsCO0DQKXxjls/g8fW34G6QGDXekBDsBR3fxvfGfM4aEehQpbKoCts/zReG839MF0/sLDMN/ArYlTxo/q0Oh5mR/Gx/snf6Z72jXljDosabkiLzPl16WDv/46O/FMycIug2/IxlFdgurmU3Xy8lmRzP3SZ/mKoqwt+DmUgH10ck0+NohTS4jG4FP1KOUGUVZdXoSq57xCGmt/yre9oJRVnfEztZzyAiQ5u37cUmyQtjgvPUQ5IBDPnJ7+VZ8Qa0n4+1GZUVRy0EjJvM7EhwyQ46XzFrGG5gOqY1N1yPx5fCEHW91gb7PTbi7iPAzesBc3t0V6DDeo34zfD2fEEqC6AepKO6aOVF05LO+dr7dJOVjGZFn2Bd1izpiKGBx/AAAAAElFTkSuQmCC");
 }
 .fourxfourbg {
     display: flex;
